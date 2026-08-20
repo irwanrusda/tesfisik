@@ -10,6 +10,7 @@ $role = $user['role'] ?? '';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($pageTitle) ?> | <?= e(config('app.name')) ?></title>
+    <link rel="icon" type="image/svg+xml" href="https://konisumbar.org/assets/img/logo_no_text.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,700&display=swap" rel="stylesheet">
@@ -19,7 +20,7 @@ $role = $user['role'] ?? '';
 <div class="app-shell">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="brand-mark">KS</div>
+            <img class="brand-logo" src="https://konisumbar.org/assets/img/logo_no_text.svg" alt="Logo KONI Sumatera Barat">
             <div><strong>KONI SUMBAR</strong><small>Tes Fisik 2026</small></div>
         </div>
         <nav class="sidebar-nav">
@@ -66,7 +67,7 @@ $role = $user['role'] ?? '';
         <header class="topbar">
             <button class="menu-toggle" id="menuToggle" type="button" aria-label="Buka menu">☰</button>
             <div><p class="topbar-date"><?= e(date('l, d F Y')) ?></p></div>
-            <div class="topbar-badge">SUMBAR <span>2026</span></div>
+            <div class="topbar-badge">KONI SUMBAR <span>2026</span></div>
         </header>
         <main class="content">
             <?php if ($message = flash('success')): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?>

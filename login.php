@@ -26,6 +26,7 @@ if (request_method('POST')) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login | <?= e(config('app.name')) ?></title>
+    <link rel="icon" type="image/svg+xml" href="https://konisumbar.org/assets/img/logo_no_text.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,700&display=swap" rel="stylesheet">
@@ -34,7 +35,7 @@ if (request_method('POST')) {
 <body class="login-body">
 <main class="login-shell">
     <section class="login-brand">
-        <div class="brand-mark brand-mark-large">KS</div>
+        <img class="brand-logo brand-logo-large" src="https://konisumbar.org/assets/img/logo_no_text.svg" alt="Logo KONI Sumatera Barat">
         <p class="eyebrow">KONI SUMATERA BARAT</p>
         <h1>Pengukuran fisik yang rapi, cepat, dan terukur.</h1>
         <p class="login-copy">Sistem pencatatan hasil tes kondisi fisik atlet Sumatera Barat tahun 2026.</p>

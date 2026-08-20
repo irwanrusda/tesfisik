@@ -1,4 +1,7 @@
 .env
+.user.ini
+php.ini
+error_log
 storage/logs/*.log
 storage/uploads/*
 storage/deploy-webhook.lock
