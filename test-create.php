@@ -8,6 +8,7 @@ Auth::requireAnyRole(['superadmin', 'panitia', 'input']);
 if (request_method('POST')) {
     verify_csrf();
     set_old($_POST);
+    $photoFiles = array_merge(uploaded_files('documentation_camera'), uploaded_files('documentation_gallery'));
 
     $athleteName = trim((string) ($_POST['athlete_name'] ?? ''));
     $masterPersonId = (int) ($_POST['master_person_id'] ?? 0);
@@ -57,6 +58,7 @@ if (request_method('POST')) {
                 trim((string) ($_POST['results'][$code]['notes'] ?? '')) ?: null,
             ]);
         }
+        $storedPhotos = store_test_photos($pdo, $testId, $photoFiles, (int) Auth::user()['id']);
         $pdo->commit();
         clear_old();
         flash('success', "Data tes {$athleteName} berhasil disimpan.");
@@ -65,10 +67,13 @@ if (request_method('POST')) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        flash('error', 'Data gagal disimpan. Silakan periksa isian dan coba lagi.');
+        foreach ($storedPhotos ?? [] as $path) {
+            if (is_file($path)) unlink($path);
+        }
+        flash('error', 'Data gagal disimpan: ' . $exception->getMessage());
         redirect('test-create.php');
     }
 }
 
 $athletes = Database::connection()->query("SELECT master_people.id, master_people.name, master_people.gender, master_people.achievement, master_people.development_status, sports.name AS sport FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE master_people.person_type = 'Atlet' AND master_people.is_active = 1 ORDER BY sports.name, master_people.name")->fetchAll();
-view('test-form', ['pageTitle' => 'Input Data Tes', 'test' => null, 'results' => [], 'formAction' => 'test-create.php', 'athletes' => $athletes]);
+view('test-form', ['pageTitle' => 'Input Data Tes', 'test' => null, 'results' => [], 'formAction' => 'test-create.php', 'athletes' => $athletes, 'photos' => []]);

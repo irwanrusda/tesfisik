@@ -154,3 +154,92 @@ function calculate_age(string $birthDate, ?string $atDate = null): int
     $at = new DateTimeImmutable($atDate ?: 'today');
     return $birth->diff($at)->y;
 }
+
+function uploaded_files(string $field): array
+{
+    $files = $_FILES[$field] ?? null;
+    if (!$files || !is_array($files['name'] ?? null)) {
+        return [];
+    }
+
+    $normalized = [];
+    foreach ($files['name'] as $index => $name) {
+        $error = (int) ($files['error'][$index] ?? UPLOAD_ERR_NO_FILE);
+        if ($error === UPLOAD_ERR_NO_FILE) {
+            continue;
+        }
+        $normalized[] = [
+            'name' => (string) $name,
+            'type' => (string) ($files['type'][$index] ?? ''),
+            'tmp_name' => (string) ($files['tmp_name'][$index] ?? ''),
+            'error' => $error,
+            'size' => (int) ($files['size'][$index] ?? 0),
+        ];
+    }
+    return $normalized;
+}
+
+function store_test_photos(PDO $pdo, int $testId, array $files, int $userId): array
+{
+    if (count($files) > 10) {
+        throw new RuntimeException('Maksimal 10 foto dapat diunggah sekaligus.');
+    }
+
+    $directory = BASE_PATH . '/storage/uploads/test-photos';
+    if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+        throw new RuntimeException('Folder penyimpanan foto tidak dapat dibuat.');
+    }
+
+    $allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $statement = $pdo->prepare('INSERT INTO test_photos (athlete_test_id, file_name, original_name, mime_type, file_size, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)');
+    $storedPaths = [];
+
+    try {
+        foreach ($files as $file) {
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                throw new RuntimeException('Salah satu foto gagal diunggah.');
+            }
+            if ($file['size'] < 1 || $file['size'] > 5 * 1024 * 1024) {
+                throw new RuntimeException('Ukuran setiap foto maksimal 5 MB.');
+            }
+
+            $mimeType = $finfo->file($file['tmp_name']);
+            if (!isset($allowedTypes[$mimeType])) {
+                throw new RuntimeException('Format foto harus JPG, PNG, atau WebP.');
+            }
+
+            $fileName = bin2hex(random_bytes(20)) . '.' . $allowedTypes[$mimeType];
+            $target = $directory . '/' . $fileName;
+            if (!move_uploaded_file($file['tmp_name'], $target)) {
+                throw new RuntimeException('Foto gagal disimpan ke server.');
+            }
+            $storedPaths[] = $target;
+            $originalName = substr(basename(str_replace('\\', '/', $file['name'])), 0, 255);
+            $statement->execute([$testId, $fileName, $originalName, $mimeType, $file['size'], $userId]);
+        }
+    } catch (Throwable $exception) {
+        foreach ($storedPaths as $path) {
+            if (is_file($path)) unlink($path);
+        }
+        throw $exception;
+    }
+
+    return $storedPaths;
+}
+
+function test_photo_path(string $fileName): string
+{
+    return BASE_PATH . '/storage/uploads/test-photos/' . basename($fileName);
+}
+
+function signed_photo_url(int $photoId, int $validForSeconds = 900): string
+{
+    $expires = time() + $validForSeconds;
+    $secret = (string) env('PHOTO_URL_SECRET', env('MIGRATION_KEY', ''));
+    if ($secret === '') {
+        throw new RuntimeException('PHOTO_URL_SECRET belum dikonfigurasi.');
+    }
+    $signature = hash_hmac('sha256', $photoId . '|' . $expires, $secret);
+    return base_url("test-photo.php?id={$photoId}&expires={$expires}&signature={$signature}");
+}

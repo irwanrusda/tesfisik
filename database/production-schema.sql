@@ -7,6 +7,7 @@ SET time_zone = '+07:00';
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS test_results;
+DROP TABLE IF EXISTS test_photos;
 DROP TABLE IF EXISTS athlete_tests;
 DROP TABLE IF EXISTS master_people;
 DROP TABLE IF EXISTS sports;
@@ -100,6 +101,20 @@ CREATE TABLE test_results (
     UNIQUE KEY uq_athlete_test_code (athlete_test_id, test_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE test_photos (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    athlete_test_id BIGINT UNSIGNED NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(50) NOT NULL,
+    file_size BIGINT UNSIGNED NOT NULL,
+    uploaded_by BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_test_photos_athlete_test FOREIGN KEY (athlete_test_id) REFERENCES athlete_tests(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_test_photos_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    INDEX idx_test_photos_athlete_test (athlete_test_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE migrations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     migration VARCHAR(255) NOT NULL UNIQUE,
@@ -119,6 +134,7 @@ INSERT INTO migrations (migration) VALUES
     ('002_create_athlete_tests.sql'),
     ('003_create_test_results.sql'),
     ('004_create_master_people.sql'),
-    ('005_add_input_panitia_roles.sql');
+    ('005_add_input_panitia_roles.sql'),
+    ('006_create_test_photos.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -15,4 +15,7 @@ $resultStatement = $pdo->prepare('SELECT * FROM test_results WHERE athlete_test_
 $resultStatement->execute([$id]);
 $results = [];
 foreach ($resultStatement->fetchAll() as $item) $results[$item['test_code']] = $item;
-view('test-view', compact('test', 'results') + ['pageTitle' => 'Detail Tes']);
+$photoStatement = $pdo->prepare('SELECT id, original_name, file_size FROM test_photos WHERE athlete_test_id = ? ORDER BY created_at, id');
+$photoStatement->execute([$id]);
+$photos = $photoStatement->fetchAll();
+view('test-view', compact('test', 'results', 'photos') + ['pageTitle' => 'Detail Tes']);

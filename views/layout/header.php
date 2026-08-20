@@ -14,6 +14,7 @@ $role = $user['role'] ?? '';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="<?= e(base_url('assets/css/app.css')) ?>">
 </head>
 <body>
@@ -27,30 +28,30 @@ $role = $user['role'] ?? '';
             <p class="nav-label">UTAMA</p>
             <?php if ($role === 'superadmin'): ?>
                 <a class="nav-item <?= $currentPage === 'dashboard.php' ? 'active' : '' ?>" href="<?= e(base_url('dashboard.php')) ?>">
-                    <span class="nav-icon">▦</span> Dashboard
+                    <span class="nav-icon"><i class="fa-solid fa-table-columns"></i></span> Dashboard
                 </a>
             <?php endif; ?>
             <?php if (in_array($role, ['superadmin', 'panitia'], true)): ?>
                 <a class="nav-item <?= $currentPage === 'summary.php' ? 'active' : '' ?>" href="<?= e(base_url('summary.php')) ?>">
-                    <span class="nav-icon">Σ</span> Summary
+                    <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span> Summary
                 </a>
                 <a class="nav-item <?= $currentPage === 'analysis.php' ? 'active' : '' ?>" href="<?= e(base_url('analysis.php')) ?>">
-                    <span class="nav-icon">⌁</span> Analisis
+                    <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Analisis
                 </a>
             <?php endif; ?>
             <a class="nav-item <?= in_array($currentPage, ['test-create.php', 'test-edit.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('test-create.php')) ?>">
-                <span class="nav-icon">＋</span> Input Data
+                <span class="nav-icon"><i class="fa-solid fa-file-circle-plus"></i></span> Input Data
             </a>
             <a class="nav-item <?= in_array($currentPage, ['reports.php', 'test-view.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('reports.php')) ?>">
-                <span class="nav-icon">▤</span> Laporan
+                <span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span> Laporan
             </a>
             <a class="nav-item <?= $currentPage === 'master-data.php' ? 'active' : '' ?>" href="<?= e(base_url('master-data.php')) ?>">
-                <span class="nav-icon">◫</span> Atlet & Pelatih
+                <span class="nav-icon"><i class="fa-solid fa-people-group"></i></span> Atlet & Pelatih
             </a>
             <?php if ($role === 'superadmin'): ?>
                 <p class="nav-label">ADMINISTRASI</p>
                 <a class="nav-item <?= $currentPage === 'users.php' ? 'active' : '' ?>" href="<?= e(base_url('users.php')) ?>">
-                    <span class="nav-icon">◎</span> Manajemen User
+                    <span class="nav-icon"><i class="fa-solid fa-user-gear"></i></span> Manajemen User
                 </a>
             <?php endif; ?>
         </nav>
@@ -59,13 +60,13 @@ $role = $user['role'] ?? '';
             <div class="user-copy"><strong><?= e($user['name'] ?? '') ?></strong><small><?= e(ucfirst($user['role'] ?? '')) ?></small></div>
             <form method="post" action="<?= e(base_url('logout.php')) ?>">
                 <?= csrf_field() ?>
-                <button class="logout-button" title="Keluar" type="submit">↗</button>
+                <button class="logout-button" title="Keluar" type="submit" aria-label="Keluar"><i class="fa-solid fa-right-from-bracket"></i></button>
             </form>
         </div>
     </aside>
     <div class="main-wrap">
         <header class="topbar">
-            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Buka menu">☰</button>
+            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
             <div><p class="topbar-date"><?= e(date('l, d F Y')) ?></p></div>
             <div class="topbar-badge">KONI SUMBAR <span>2026</span></div>
         </header>

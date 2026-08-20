@@ -102,3 +102,95 @@ if (selectedAthlete) {
     athleteCombobox.value = `${selectedAthlete.dataset.name} - ${selectedAthlete.dataset.sport}`;
     updateAthleteFields(selectedAthlete);
 }
+
+const photoInputs = Array.from(document.querySelectorAll('[data-photo-input]'));
+const photoPreview = document.querySelector('[data-photo-preview]');
+
+function compressPhoto(file) {
+    return new Promise((resolve, reject) => {
+        if (!file.type.startsWith('image/')) {
+            reject(new Error(`${file.name} bukan file gambar.`));
+            return;
+        }
+
+        const image = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        image.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            const maxDimension = 1600;
+            const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+            const width = Math.max(1, Math.round(image.naturalWidth * scale));
+            const height = Math.max(1, Math.round(image.naturalHeight * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#fff';
+            context.fillRect(0, 0, width, height);
+            context.drawImage(image, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    reject(new Error(`${file.name} gagal dikompresi.`));
+                    return;
+                }
+                const baseName = file.name.replace(/\.[^.]+$/, '') || 'dokumentasi';
+                resolve(new File([blob], `${baseName}.jpg`, { type: 'image/jpeg', lastModified: Date.now() }));
+            }, 'image/jpeg', 0.78);
+        };
+        image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error(`${file.name} tidak dapat dibaca oleh browser.`));
+        };
+        image.src = objectUrl;
+    });
+}
+
+function renderPhotoPreviews() {
+    if (!photoPreview) return;
+    photoPreview.replaceChildren();
+    photoInputs.flatMap((input) => Array.from(input.files || [])).forEach((file) => {
+        const card = document.createElement('div');
+        card.className = 'photo-preview-card';
+        const image = document.createElement('img');
+        image.alt = file.name;
+        image.src = URL.createObjectURL(file);
+        image.addEventListener('load', () => URL.revokeObjectURL(image.src), { once: true });
+        const caption = document.createElement('span');
+        caption.textContent = `${file.name} · ${Math.ceil(file.size / 1024)} KB`;
+        card.append(image, caption);
+        photoPreview.append(card);
+    });
+}
+
+photoInputs.forEach((input) => {
+    input.addEventListener('change', async () => {
+        const otherCount = photoInputs
+            .filter((item) => item !== input)
+            .reduce((total, item) => total + (item.files?.length || 0), 0);
+        const selectedFiles = Array.from(input.files || []);
+        if (otherCount + selectedFiles.length > 10) {
+            input.value = '';
+            window.alert('Maksimal 10 foto dapat diunggah dalam satu penyimpanan.');
+            renderPhotoPreviews();
+            return;
+        }
+
+        input.disabled = true;
+        try {
+            const compressedFiles = [];
+            for (const file of selectedFiles) {
+                compressedFiles.push(await compressPhoto(file));
+            }
+            const transfer = new DataTransfer();
+            compressedFiles.forEach((file) => transfer.items.add(file));
+            input.files = transfer.files;
+            renderPhotoPreviews();
+        } catch (error) {
+            input.value = '';
+            renderPhotoPreviews();
+            window.alert(error.message || 'Foto gagal diproses.');
+        } finally {
+            input.disabled = false;
+        }
+    });
+});

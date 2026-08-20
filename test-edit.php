@@ -17,6 +17,7 @@ if (!$test) {
 
 if (request_method('POST')) {
     verify_csrf();
+    $photoFiles = array_merge(uploaded_files('documentation_camera'), uploaded_files('documentation_gallery'));
     $masterPersonId = (int) ($_POST['master_person_id'] ?? 0);
     $height = nullable_number($_POST['height_cm'] ?? null);
     $weight = nullable_number($_POST['weight_kg'] ?? null);
@@ -50,12 +51,30 @@ if (request_method('POST')) {
         foreach (physical_test_items() as $code => $item) {
             $upsert->execute([$id, $code, nullable_number($_POST['results'][$code]['value'] ?? null), $item['unit'], trim((string) ($_POST['results'][$code]['category'] ?? '')) ?: null, trim((string) ($_POST['results'][$code]['notes'] ?? '')) ?: null]);
         }
+        $storedPhotos = store_test_photos($pdo, $id, $photoFiles, (int) Auth::user()['id']);
+        $deleteIds = array_values(array_filter(array_map('intval', $_POST['delete_photos'] ?? [])));
+        $deletedFiles = [];
+        if ($deleteIds) {
+            $placeholders = implode(',', array_fill(0, count($deleteIds), '?'));
+            $photoQuery = $pdo->prepare("SELECT id, file_name FROM test_photos WHERE athlete_test_id = ? AND id IN ({$placeholders})");
+            $photoQuery->execute(array_merge([$id], $deleteIds));
+            $deletedFiles = $photoQuery->fetchAll();
+            $deleteStatement = $pdo->prepare("DELETE FROM test_photos WHERE athlete_test_id = ? AND id IN ({$placeholders})");
+            $deleteStatement->execute(array_merge([$id], $deleteIds));
+        }
         $pdo->commit();
+        foreach ($deletedFiles as $photo) {
+            $path = test_photo_path($photo['file_name']);
+            if (is_file($path)) unlink($path);
+        }
         flash('success', 'Data tes berhasil diperbarui.');
         redirect('test-view.php?id=' . $id);
     } catch (Throwable $exception) {
         if ($pdo->inTransaction()) $pdo->rollBack();
-        flash('error', 'Perubahan data gagal disimpan.');
+        foreach ($storedPhotos ?? [] as $path) {
+            if (is_file($path)) unlink($path);
+        }
+        flash('error', 'Perubahan data gagal disimpan: ' . $exception->getMessage());
         redirect('test-edit.php?id=' . $id);
     }
 }
@@ -65,4 +84,7 @@ $resultStatement->execute([$id]);
 $results = [];
 foreach ($resultStatement->fetchAll() as $result) $results[$result['test_code']] = $result;
 $athletes = $pdo->query("SELECT master_people.id, master_people.name, master_people.gender, master_people.achievement, master_people.development_status, sports.name AS sport FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE master_people.person_type = 'Atlet' AND master_people.is_active = 1 ORDER BY sports.name, master_people.name")->fetchAll();
-view('test-form', ['pageTitle' => 'Edit Data Tes', 'test' => $test, 'results' => $results, 'formAction' => 'test-edit.php?id=' . $id, 'athletes' => $athletes]);
+$photoStatement = $pdo->prepare('SELECT id, original_name, file_size FROM test_photos WHERE athlete_test_id = ? ORDER BY created_at, id');
+$photoStatement->execute([$id]);
+$photos = $photoStatement->fetchAll();
+view('test-form', ['pageTitle' => 'Edit Data Tes', 'test' => $test, 'results' => $results, 'formAction' => 'test-edit.php?id=' . $id, 'athletes' => $athletes, 'photos' => $photos]);

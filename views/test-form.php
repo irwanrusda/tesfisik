@@ -10,7 +10,7 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
     <div><p class="eyebrow"><?= $isEdit ? 'PERBARUI PENGUKURAN' : 'PENGUKURAN BARU' ?></p><h1><?= $isEdit ? 'Edit Data Tes' : 'Input Data Tes Fisik' ?></h1><p>Isi identitas atlet dan hasil setiap item pengukuran.</p></div>
     <?php if ($isEdit): ?><a class="btn btn-light" href="<?= e(base_url('test-view.php?id=' . $test['id'])) ?>">Kembali ke Detail</a><?php endif; ?>
 </div>
-<form method="post" action="<?= e(base_url($formAction)) ?>" class="test-form">
+<form method="post" action="<?= e(base_url($formAction)) ?>" class="test-form" enctype="multipart/form-data">
     <?= csrf_field() ?>
     <?php if ($isEdit): ?><input type="hidden" name="id" value="<?= e($test['id']) ?>"><?php endif; ?>
     <section class="panel form-section">
@@ -44,6 +44,35 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
                 </div>
             <?php endforeach; ?>
         </div>
+    </section>
+    <section class="panel form-section">
+        <div class="section-number">03</div><div class="section-title"><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2></div>
+        <div class="photo-source-grid">
+            <label class="photo-upload">
+                <input type="file" name="documentation_camera[]" accept="image/*" capture="environment" data-photo-input>
+                <span class="photo-upload-icon"><i class="fa-solid fa-camera"></i></span><strong>Ambil Foto</strong><small>Buka kamera perangkat dan ambil satu foto.</small>
+            </label>
+            <label class="photo-upload">
+                <input type="file" name="documentation_gallery[]" accept="image/jpeg,image/png,image/webp" multiple data-photo-input>
+                <span class="photo-upload-icon"><i class="fa-solid fa-images"></i></span><strong>Pilih dari Galeri</strong><small>Pilih beberapa foto dari perangkat.</small>
+            </label>
+        </div>
+        <p class="compression-note">Foto otomatis diperkecil maksimal 1600 piksel dan dikompresi sebelum diunggah.</p>
+        <div class="photo-preview-grid" data-photo-preview></div>
+        <?php if ($photos): ?>
+            <div class="existing-photos">
+                <p class="eyebrow">FOTO TERSIMPAN</p>
+                <div class="photo-grid">
+                    <?php foreach ($photos as $photo): ?>
+                        <label class="photo-manage-card">
+                            <img src="<?= e(signed_photo_url((int) $photo['id'])) ?>" alt="<?= e($photo['original_name']) ?>" loading="lazy">
+                            <span><?= e($photo['original_name']) ?><small><?= e(round((int) $photo['file_size'] / 1024)) ?> KB</small></span>
+                            <span class="photo-delete"><input type="checkbox" name="delete_photos[]" value="<?= e($photo['id']) ?>"> Hapus saat disimpan</span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </section>
     <div class="form-actions"><a class="btn btn-light" href="<?= e(base_url('reports.php')) ?>">Batal</a><button class="btn btn-primary" type="submit"><?= $isEdit ? 'Simpan Perubahan' : 'Simpan Data Tes' ?></button></div>
 </form>

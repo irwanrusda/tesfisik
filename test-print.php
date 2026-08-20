@@ -15,6 +15,9 @@ $resultStatement = $pdo->prepare('SELECT * FROM test_results WHERE athlete_test_
 $resultStatement->execute([$id]);
 $results = [];
 foreach ($resultStatement->fetchAll() as $item) $results[$item['test_code']] = $item;
+$photoStatement = $pdo->prepare('SELECT id, original_name FROM test_photos WHERE athlete_test_id = ? ORDER BY created_at, id');
+$photoStatement->execute([$id]);
+$photos = $photoStatement->fetchAll();
 $groups = [
     ['component' => 'KEKUATAN', 'codes' => ['sit_up', 'push_up', 'pull_up']],
     ['component' => 'POWER (Daya Ledak)', 'codes' => ['medicine_ball', 'vertical_jump']],
@@ -37,5 +40,6 @@ $groups = [
     <?php endforeach; ?>
     </tbody></table></section>
     <?php if ($test['notes']): ?><p class="print-notes"><strong>Catatan:</strong> <?= e($test['notes']) ?></p><?php endif; ?>
+    <?php if ($photos): ?><section class="print-documentation"><h3>III. DOKUMENTASI KEGIATAN</h3><div><?php foreach ($photos as $photo): ?><figure><img src="<?= e(signed_photo_url((int) $photo['id'], 1800)) ?>" alt="<?= e($photo['original_name']) ?>"><figcaption><?= e($photo['original_name']) ?></figcaption></figure><?php endforeach; ?></div></section><?php endif; ?>
     <footer class="signature"><div></div><div><p><?= e($test['test_place']) ?>, <?= e(format_date($test['test_date'], 'd F Y')) ?></p><strong>PANITIA TES,</strong><span></span><p>(........................................)</p></div></footer>
 </main></body></html>
