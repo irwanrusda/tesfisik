@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/app/bootstrap.php';
+Auth::requireAnyRole(['superadmin', 'panitia']);
+
+$pdo = Database::connection();
+$testCount = (int) $pdo->query('SELECT COUNT(*) FROM athlete_tests')->fetchColumn();
+$testedAthletes = (int) $pdo->query('SELECT COUNT(DISTINCT master_person_id) FROM athlete_tests WHERE master_person_id IS NOT NULL')->fetchColumn();
+$retestedAthletes = (int) $pdo->query('SELECT COUNT(*) FROM (SELECT master_person_id FROM athlete_tests WHERE master_person_id IS NOT NULL GROUP BY master_person_id HAVING COUNT(*) > 1) repeated')->fetchColumn();
+$expectedItems = count(physical_test_items());
+$filledItems = (int) $pdo->query('SELECT COUNT(*) FROM test_results WHERE result_value IS NOT NULL')->fetchColumn();
+$completeness = $testCount > 0 ? round($filledItems / ($testCount * $expectedItems) * 100, 1) : 0;
+
+$categoryRows = $pdo->query(
+    "SELECT COALESCE(NULLIF(category, ''), 'Belum Dinilai') AS label, COUNT(*) AS total
+     FROM test_results WHERE result_value IS NOT NULL
+     GROUP BY COALESCE(NULLIF(category, ''), 'Belum Dinilai')
+     ORDER BY FIELD(label, 'Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Sangat Kurang', 'Belum Dinilai')"
+)->fetchAll();
+$categoryTotal = array_sum(array_map(static fn($row) => (int) $row['total'], $categoryRows));
+
+$bmiRows = $pdo->query(
+    "SELECT CASE WHEN bmi < 18.5 THEN 'Kurus' WHEN bmi < 25 THEN 'Normal' WHEN bmi < 30 THEN 'Berlebih' ELSE 'Obesitas' END AS label, COUNT(*) AS total
+     FROM athlete_tests GROUP BY label ORDER BY FIELD(label, 'Kurus', 'Normal', 'Berlebih', 'Obesitas')"
+)->fetchAll();
+$bmiTotal = array_sum(array_map(static fn($row) => (int) $row['total'], $bmiRows));
+
+$averageRows = $pdo->query('SELECT test_code, ROUND(AVG(result_value), 2) AS average, MIN(result_value) AS minimum, MAX(result_value) AS maximum, COUNT(result_value) AS samples FROM test_results WHERE result_value IS NOT NULL GROUP BY test_code')->fetchAll();
+$averages = [];
+foreach ($averageRows as $row) $averages[$row['test_code']] = $row;
+
+$coverageRows = $pdo->query(
+    "SELECT s.name, COUNT(mp.id) AS athletes, SUM(EXISTS (SELECT 1 FROM athlete_tests at WHERE at.master_person_id = mp.id)) AS tested
+     FROM sports s JOIN master_people mp ON mp.sport_id = s.id AND mp.person_type = 'Atlet' AND mp.is_active = 1
+     GROUP BY s.id, s.name ORDER BY tested DESC, athletes DESC, s.name"
+)->fetchAll();
+
+$weakRows = $pdo->query(
+    "SELECT tr.test_code, SUM(tr.category IN ('Kurang', 'Sangat Kurang')) AS weak, COUNT(tr.result_value) AS total
+     FROM test_results tr WHERE tr.result_value IS NOT NULL GROUP BY tr.test_code ORDER BY weak DESC, total DESC"
+)->fetchAll();
+
+$recommendations = [];
+if ($testCount === 0) {
+    $recommendations[] = ['title' => 'Mulai pengumpulan data tes', 'text' => 'Belum ada hasil tes yang dapat dianalisis. Jadwalkan tes per cabor dan prioritaskan atlet Andalan.'];
+} else {
+    if ($completeness < 90) $recommendations[] = ['title' => 'Lengkapi item pengukuran', 'text' => "Kelengkapan hasil baru {$completeness}%. Pastikan sembilan item tes diisi agar perbandingan atlet akurat."];
+    $normalBmi = 0;
+    foreach ($bmiRows as $row) if ($row['label'] === 'Normal') $normalBmi = (int) $row['total'];
+    if ($bmiTotal > 0 && $normalBmi / $bmiTotal < .7) $recommendations[] = ['title' => 'Tinjau komposisi tubuh', 'text' => 'Kurang dari 70% hasil tes berada pada kategori IMT normal. Lakukan penilaian lanjutan sesuai karakteristik cabang olahraga.'];
+    $topWeak = $weakRows[0] ?? null;
+    if ($topWeak && (int) $topWeak['weak'] > 0) {
+        $definition = physical_test_items()[$topWeak['test_code']] ?? ['method' => $topWeak['test_code']];
+        $recommendations[] = ['title' => 'Prioritaskan ' . $definition['method'], 'text' => $topWeak['weak'] . ' hasil berada pada kategori Kurang atau Sangat Kurang, tertinggi di antara item yang telah dinilai.'];
+    }
+    if ($retestedAthletes === 0) $recommendations[] = ['title' => 'Siapkan tes berkala', 'text' => 'Belum ada atlet dengan tes berulang. Tes berkala diperlukan untuk membaca tren peningkatan atau penurunan kondisi fisik.'];
+}
+if (!$recommendations) $recommendations[] = ['title' => 'Kualitas data baik', 'text' => 'Data cukup lengkap. Lanjutkan pemantauan berkala dan bandingkan tren per atlet serta cabang olahraga.'];
+
+view('analysis', compact('testCount', 'testedAthletes', 'retestedAthletes', 'completeness', 'categoryRows', 'categoryTotal', 'bmiRows', 'bmiTotal', 'averages', 'coverageRows', 'recommendations') + ['pageTitle' => 'Analisis Tes']);

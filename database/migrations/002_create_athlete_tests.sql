@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS athlete_tests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    test_number VARCHAR(30) NOT NULL UNIQUE,
+    athlete_name VARCHAR(120) NOT NULL,
+    birth_place VARCHAR(100) NOT NULL,
+    birth_date DATE NOT NULL,
+    sport VARCHAR(100) NOT NULL,
+    gender ENUM('L', 'P') NOT NULL,
+    height_cm DECIMAL(6,2) NOT NULL,
+    weight_kg DECIMAL(6,2) NOT NULL,
+    bmi DECIMAL(5,2) NOT NULL,
+    test_date DATE NOT NULL,
+    test_place VARCHAR(100) NOT NULL DEFAULT 'Padang',
+    notes TEXT NULL,
+    created_by BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_athlete_tests_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    INDEX idx_athlete_name (athlete_name),
+    INDEX idx_sport (sport),
+    INDEX idx_test_date (test_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
