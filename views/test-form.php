@@ -45,8 +45,8 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
             <?php endforeach; ?>
         </div>
     </section>
-    <section class="panel form-section">
-        <div class="section-number">03</div><div class="section-title"><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2></div>
+    <section class="panel form-section documentation-form-section">
+        <div class="section-number">03</div><div class="section-title documentation-title"><div><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2><p>Ambil foto langsung atau pilih beberapa dokumentasi dari galeri perangkat.</p></div><span class="documentation-title-icon"><i class="fa-solid fa-camera-retro"></i></span></div>
         <div class="photo-source-grid">
             <label class="photo-upload">
                 <input type="file" name="documentation_camera[]" accept="image/*" capture="environment" data-photo-input>
@@ -57,11 +57,11 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
                 <span class="photo-upload-icon"><i class="fa-solid fa-images"></i></span><strong>Pilih dari Galeri</strong><small>Pilih beberapa foto dari perangkat.</small>
             </label>
         </div>
-        <p class="compression-note">Foto otomatis diperkecil maksimal 1600 piksel dan dikompresi sebelum diunggah.</p>
+        <p class="compression-note"><i class="fa-solid fa-wand-magic-sparkles"></i> Foto otomatis diperkecil maksimal 1600 piksel dan dikompresi sebelum diunggah.</p>
         <div class="photo-preview-grid" data-photo-preview></div>
         <?php if ($photos): ?>
             <div class="existing-photos">
-                <p class="eyebrow">FOTO TERSIMPAN</p>
+                <div class="existing-photos-heading"><div><p class="eyebrow">FOTO TERSIMPAN</p><strong><?= e(count($photos)) ?> dokumentasi</strong></div><small>Centang foto yang ingin dihapus, lalu simpan perubahan.</small></div>
                 <div class="photo-grid">
                     <?php foreach ($photos as $photo): ?>
                         <label class="photo-manage-card">

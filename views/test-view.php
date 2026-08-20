@@ -8,12 +8,12 @@
 </section>
 <?php if ($photos): ?>
 <section class="panel documentation-panel">
-    <div class="panel-header"><div><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2></div><span class="count-badge"><?= e(count($photos)) ?> foto</span></div>
+    <div class="panel-header documentation-header"><div><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2><p>Rekaman visual pelaksanaan pengukuran fisik atlet.</p></div><span class="documentation-count"><i class="fa-solid fa-images"></i><?= e(count($photos)) ?> foto</span></div>
     <div class="documentation-grid">
         <?php foreach ($photos as $photo): ?>
             <a href="<?= e(signed_photo_url((int) $photo['id'])) ?>" target="_blank" class="documentation-card">
                 <img src="<?= e(signed_photo_url((int) $photo['id'])) ?>" alt="<?= e($photo['original_name']) ?>" loading="lazy">
-                <span><?= e($photo['original_name']) ?><small><?= e(round((int) $photo['file_size'] / 1024)) ?> KB</small></span>
+                <span><strong><?= e($photo['original_name']) ?></strong><small><i class="fa-solid fa-expand"></i> Buka foto · <?= e(round((int) $photo['file_size'] / 1024)) ?> KB</small></span>
             </a>
         <?php endforeach; ?>
     </div>
