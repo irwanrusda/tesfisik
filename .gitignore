@@ -1,5 +1,6 @@
 .env
 storage/logs/*.log
 storage/uploads/*
+storage/deploy-webhook.lock
 !storage/logs/.gitkeep
 !storage/uploads/.gitkeep

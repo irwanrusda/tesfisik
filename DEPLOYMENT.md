@@ -48,3 +48,30 @@ Migrasi juga memastikan akun operasional dari variabel berikut tersedia:
 - `PANITIA_USERNAME` dan `PANITIA_PASSWORD`: seluruh akses akun Input ditambah Summary dan Analisis.
 
 Gunakan password produksi yang kuat dan berbeda untuk setiap akun.
+
+## Deployment Otomatis dengan GitHub Webhook
+
+Endpoint webhook tersedia di `deploy-webhook.php`. Endpoint ini memverifikasi signature GitHub, hanya menerima push branch `main` dari repository yang dikonfigurasi, menjalankan `git pull --ff-only`, lalu menjalankan migrasi.
+
+Tambahkan konfigurasi berikut ke `.env` produksi:
+
+```env
+GITHUB_WEBHOOK_SECRET=secret-panjang-dan-acak
+GITHUB_REPOSITORY=irwanrusda/tesfisik
+DEPLOY_BRANCH=main
+DEPLOY_REPOSITORY_PATH=/home/username/public_html/tesfisik
+DEPLOY_GIT_BINARY=/usr/bin/git
+DEPLOY_PHP_BINARY=/usr/local/bin/php
+```
+
+Pastikan `DEPLOY_REPOSITORY_PATH` adalah folder aplikasi yang memiliki direktori `.git`. Jika repository cPanel berada di luar `public_html`, isi path repository tersebut dan pastikan aplikasi dijalankan dari lokasi yang sama atau tambahkan mekanisme penyalinan terpisah.
+
+Atur webhook pada GitHub melalui `Settings > Webhooks > Add webhook`:
+
+- Payload URL: `https://domain.tld/tesfisik/deploy-webhook.php`
+- Content type: `application/json`
+- Secret: harus sama persis dengan `GITHUB_WEBHOOK_SECRET`
+- Events: `Just the push event`
+- Active: aktif
+
+Log deployment disimpan di `storage/logs/deploy.log` dan dilindungi oleh `storage/.htaccess`. Jika respons menyatakan `proc_open` dinonaktifkan, hosting tidak mengizinkan metode webhook ini dan deployment harus menggunakan SSH, cron, atau fitur Git cPanel.
