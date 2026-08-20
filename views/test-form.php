@@ -53,7 +53,6 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
             <strong>Lampirkan Foto Dokumentasi</strong>
             <small>Pilih atau ambil satu maupun beberapa foto dari perangkat. Maksimal 10 foto.</small>
         </label>
-        <p class="compression-note"><i class="fa-solid fa-wand-magic-sparkles"></i> Foto otomatis diperkecil maksimal 1600 piksel dan dikompresi sebelum diunggah.</p>
         <div class="photo-preview-grid" data-photo-preview></div>
         <?php if ($photos): ?>
             <div class="existing-photos">
