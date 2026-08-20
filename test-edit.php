@@ -17,7 +17,7 @@ if (!$test) {
 
 if (request_method('POST')) {
     verify_csrf();
-    $photoFiles = array_merge(uploaded_files('documentation_camera'), uploaded_files('documentation_gallery'));
+    $photoFiles = uploaded_files('documentation_photos');
     $masterPersonId = (int) ($_POST['master_person_id'] ?? 0);
     $height = nullable_number($_POST['height_cm'] ?? null);
     $weight = nullable_number($_POST['weight_kg'] ?? null);

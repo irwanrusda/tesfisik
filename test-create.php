@@ -8,7 +8,7 @@ Auth::requireAnyRole(['superadmin', 'panitia', 'input']);
 if (request_method('POST')) {
     verify_csrf();
     set_old($_POST);
-    $photoFiles = array_merge(uploaded_files('documentation_camera'), uploaded_files('documentation_gallery'));
+    $photoFiles = uploaded_files('documentation_photos');
 
     $athleteName = trim((string) ($_POST['athlete_name'] ?? ''));
     $masterPersonId = (int) ($_POST['master_person_id'] ?? 0);

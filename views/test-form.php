@@ -47,16 +47,12 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
     </section>
     <section class="panel form-section documentation-form-section">
         <div class="section-number">03</div><div class="section-title documentation-title"><div><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2><p>Ambil foto langsung atau pilih beberapa dokumentasi dari galeri perangkat.</p></div><span class="documentation-title-icon"><i class="fa-solid fa-camera-retro"></i></span></div>
-        <div class="photo-source-grid">
-            <label class="photo-upload">
-                <input type="file" name="documentation_camera[]" accept="image/*" capture="environment" data-photo-input>
-                <span class="photo-upload-icon"><i class="fa-solid fa-camera"></i></span><strong>Ambil Foto</strong><small>Buka kamera perangkat dan ambil satu foto.</small>
-            </label>
-            <label class="photo-upload">
-                <input type="file" name="documentation_gallery[]" accept="image/jpeg,image/png,image/webp" multiple data-photo-input>
-                <span class="photo-upload-icon"><i class="fa-solid fa-images"></i></span><strong>Pilih dari Galeri</strong><small>Pilih beberapa foto dari perangkat.</small>
-            </label>
-        </div>
+        <label class="photo-upload photo-upload-standard">
+            <input type="file" name="documentation_photos[]" accept="image/*" multiple data-photo-input>
+            <span class="photo-upload-icon"><i class="fa-solid fa-paperclip"></i></span>
+            <strong>Lampirkan Foto Dokumentasi</strong>
+            <small>Pilih atau ambil satu maupun beberapa foto dari perangkat. Maksimal 10 foto.</small>
+        </label>
         <p class="compression-note"><i class="fa-solid fa-wand-magic-sparkles"></i> Foto otomatis diperkecil maksimal 1600 piksel dan dikompresi sebelum diunggah.</p>
         <div class="photo-preview-grid" data-photo-preview></div>
         <?php if ($photos): ?>
