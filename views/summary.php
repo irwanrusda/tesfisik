@@ -5,7 +5,6 @@ $participation = $total > 0 ? round($tested / $total * 100, 1) : 0;
 ?>
 <div class="page-heading">
     <div><p class="eyebrow">RINGKASAN MASTER DATA</p><h1>Summary Atlet</h1><p>Komposisi atlet aktif dan progres keikutsertaan tes fisik.</p></div>
-    <a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Input Tes Baru</a>
 </div>
 
 <section class="summary-kpis">

@@ -39,9 +39,11 @@ $role = $user['role'] ?? '';
                     <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Analisis
                 </a>
             <?php endif; ?>
-            <a class="nav-item <?= in_array($currentPage, ['test-create.php', 'test-edit.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('test-create.php')) ?>">
-                <span class="nav-icon"><i class="fa-solid fa-file-circle-plus"></i></span> Input Data
-            </a>
+            <?php if ($role === 'input'): ?>
+                <a class="nav-item <?= in_array($currentPage, ['test-create.php', 'test-edit.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('test-create.php')) ?>">
+                    <span class="nav-icon"><i class="fa-solid fa-file-circle-plus"></i></span> Input Data
+                </a>
+            <?php endif; ?>
             <a class="nav-item <?= in_array($currentPage, ['reports.php', 'test-view.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('reports.php')) ?>">
                 <span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span> Laporan
             </a>
