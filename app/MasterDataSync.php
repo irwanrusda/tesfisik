@@ -59,7 +59,7 @@ final class MasterDataSync
 
                 $sportStatement->execute([$sport]);
                 $sportId = (int) $pdo->lastInsertId();
-                $sourceKey = hash('sha256', mb_strtolower($name . '|' . $type . '|' . $sport));
+                $sourceKey = hash('sha256', strtolower($name . '|' . $type . '|' . $sport));
                 $personStatement->execute([$sourceKey, $name, $type, $gender, $sportId, $achievement ?: null, $status ?: null, $description ?: null]);
                 $sportNames[$sport] = true;
                 $type === 'Atlet' ? $athletes++ : $coaches++;
