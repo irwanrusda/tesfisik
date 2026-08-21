@@ -1,10 +1,20 @@
 let lastTouchEnd = 0;
+let lastTouchStart = 0;
+document.addEventListener('touchstart', (event) => {
+    if (event.touches.length > 1) event.preventDefault();
+    const now = Date.now();
+    if (now - lastTouchStart <= 300) event.preventDefault();
+    lastTouchStart = now;
+}, { passive: false, capture: true });
 document.addEventListener('touchend', (event) => {
     const now = Date.now();
-    if (now - lastTouchEnd <= 300) event.preventDefault();
+    if (now - lastTouchEnd <= 350) event.preventDefault();
     lastTouchEnd = now;
-}, { passive: false });
-document.addEventListener('gesturestart', (event) => event.preventDefault());
+}, { passive: false, capture: true });
+document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false, capture: true });
+['gesturestart', 'gesturechange', 'gestureend'].forEach((name) => {
+    document.addEventListener(name, (event) => event.preventDefault(), { passive: false, capture: true });
+});
 
 const menuToggle = document.getElementById('menuToggle');
 const sidebar = document.getElementById('sidebar');
