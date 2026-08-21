@@ -52,7 +52,7 @@
                     <input type="hidden" name="status" value="<?= e($status) ?>">
                     <input type="hidden" name="q" value="<?= e($q) ?>">
                     <input type="hidden" name="athlete_test_id" value="<?= e($row['id']) ?>">
-                    <label class="field compact"><span><?= e($rowDefinition['method']) ?> (<?= e($rowDefinition['unit']) ?>)</span><input type="number" step="0.01" min="0" name="result_value" value="<?= e($row['result_value'] ?? '') ?>" required><small class="field-help"><?= e($rowDefinition['instruction']) ?></small></label>
+                    <label class="field compact"><span><?= e($rowDefinition['method']) ?> (<?= e($rowDefinition['unit']) ?>) *</span><input type="number" step="0.01" min="0" name="result_value" value="<?= e($row['result_value'] ?? '') ?>" required></label>
                     <label class="field compact station-category-field"><span>Kategori</span><select name="category"><option value="">Pilih kategori</option><?php foreach ($categories as $category): ?><option value="<?= e($category) ?>" <?= $row['category'] === $category ? 'selected' : '' ?>><?= e($category) ?></option><?php endforeach; ?></select></label>
                     <label class="field compact"><span>Ket/Paraf</span><input name="examiner_notes" value="<?= e($row['examiner_notes'] ?? '') ?>" placeholder="Opsional"></label>
                     <div class="station-documentation">

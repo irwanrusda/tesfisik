@@ -7,10 +7,10 @@
         <form method="post" class="form-stack">
             <?= csrf_field() ?>
             <input type="hidden" name="id" value="<?= e($editing['id'] ?? 0) ?>">
-            <label class="field"><span>Nama Lengkap</span><input name="name" value="<?= e($editing['name'] ?? '') ?>" required></label>
-            <label class="field"><span>Username</span><input name="username" value="<?= e($editing['username'] ?? '') ?>" required></label>
-            <label class="field"><span>Password <?= $editing ? '(kosongkan jika tidak diubah)' : '' ?></span><input type="password" name="password" <?= $editing ? '' : 'required minlength="8"' ?>></label>
-            <label class="field"><span>Peran</span><select name="role"><option value="input" <?= ($editing['role'] ?? '') === 'input' ? 'selected' : '' ?>>Input</option><option value="panitia" <?= ($editing['role'] ?? '') === 'panitia' ? 'selected' : '' ?>>Panitia</option><option value="superadmin" <?= ($editing['role'] ?? '') === 'superadmin' ? 'selected' : '' ?>>Superadmin</option></select></label>
+            <label class="field"><span>Nama Lengkap *</span><input name="name" value="<?= e($editing['name'] ?? '') ?>" required></label>
+            <label class="field"><span>Username *</span><input name="username" value="<?= e($editing['username'] ?? '') ?>" required></label>
+            <label class="field"><span>Password <?= $editing ? '(kosongkan jika tidak diubah)' : '*' ?></span><input type="password" name="password" <?= $editing ? '' : 'required minlength="8"' ?>></label>
+            <label class="field"><span>Peran *</span><select name="role" required><option value="input" <?= ($editing['role'] ?? '') === 'input' ? 'selected' : '' ?>>Input</option><option value="panitia" <?= ($editing['role'] ?? '') === 'panitia' ? 'selected' : '' ?>>Panitia</option><option value="superadmin" <?= ($editing['role'] ?? '') === 'superadmin' ? 'selected' : '' ?>>Superadmin</option></select></label>
             <label class="check-field"><input type="checkbox" name="is_active" value="1" <?= !isset($editing['is_active']) || $editing['is_active'] ? 'checked' : '' ?>><span>User aktif</span></label>
             <div class="button-row"><button class="btn btn-primary" type="submit"><?= $editing ? 'Simpan Perubahan' : 'Tambah User' ?></button><?php if ($editing): ?><a class="btn btn-light" href="<?= e(base_url('users.php')) ?>">Batal</a><?php endif; ?></div>
         </form>

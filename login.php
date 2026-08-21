@@ -55,11 +55,11 @@ if (request_method('POST')) {
             <form method="post" class="form-stack">
                 <?= csrf_field() ?>
                 <label class="field">
-                    <span>Username</span>
+                    <span>Username *</span>
                     <input type="text" name="username" autocomplete="username" required autofocus>
                 </label>
                 <label class="field">
-                    <span>Password</span>
+                    <span>Password *</span>
                     <input type="password" name="password" autocomplete="current-password" required>
                 </label>
                 <button class="btn btn-primary btn-block" type="submit">Masuk</button>
