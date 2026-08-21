@@ -30,6 +30,12 @@ $bmiTotal = array_sum(array_map(static fn($row) => (int) $row['total'], $bmiRows
 $averageRows = $pdo->query('SELECT test_code, ROUND(AVG(result_value), 2) AS average, MIN(result_value) AS minimum, MAX(result_value) AS maximum, COUNT(result_value) AS samples FROM test_results WHERE result_value IS NOT NULL GROUP BY test_code')->fetchAll();
 $averages = [];
 foreach ($averageRows as $row) $averages[$row['test_code']] = $row;
+$vo2maxSummary = $pdo->query('SELECT ROUND(AVG(vo2max), 2) AS average, MIN(vo2max) AS minimum, MAX(vo2max) AS maximum, COUNT(vo2max) AS samples FROM bleep_tests')->fetch();
+$bleepOverview = $pdo->query('SELECT COUNT(*) AS total_tests, COUNT(DISTINCT master_person_id) AS athletes, ROUND(AVG(level), 1) AS average_level, ROUND(AVG(distance_m), 0) AS average_distance FROM bleep_tests')->fetch();
+$bleepCategoryRows = $pdo->query("SELECT COALESCE(NULLIF(category, ''), 'Belum Dinilai') AS label, COUNT(*) AS total FROM bleep_tests GROUP BY COALESCE(NULLIF(category, ''), 'Belum Dinilai') ORDER BY FIELD(label, 'Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Sangat Kurang', 'Belum Dinilai')")->fetchAll();
+$bleepCategoryTotal = array_sum(array_map(static fn($row) => (int) $row['total'], $bleepCategoryRows));
+$bleepSportAnalysis = $pdo->query('SELECT sport, COUNT(*) AS tests, COUNT(DISTINCT master_person_id) AS athletes, ROUND(AVG(vo2max), 2) AS average_vo2max, MAX(vo2max) AS highest_vo2max, ROUND(AVG(distance_m), 0) AS average_distance FROM bleep_tests GROUP BY sport ORDER BY average_vo2max DESC, tests DESC, sport LIMIT 12')->fetchAll();
+$bleepTopAthletes = $pdo->query('SELECT athlete_name, sport, level, shuttle, distance_m, vo2max, test_date FROM bleep_tests ORDER BY vo2max DESC, test_date DESC LIMIT 10')->fetchAll();
 
 $coverageRows = $pdo->query(
     "SELECT s.name, COUNT(mp.id) AS athletes, SUM(EXISTS (SELECT 1 FROM athlete_tests at WHERE at.master_person_id = mp.id)) AS tested
@@ -59,4 +65,4 @@ if ($testCount === 0) {
 }
 if (!$recommendations) $recommendations[] = ['title' => 'Kualitas data baik', 'text' => 'Data cukup lengkap. Lanjutkan pemantauan berkala dan bandingkan tren per atlet serta cabang olahraga.'];
 
-view('analysis', compact('testCount', 'testedAthletes', 'retestedAthletes', 'completeness', 'categoryRows', 'categoryTotal', 'bmiRows', 'bmiTotal', 'averages', 'coverageRows', 'recommendations') + ['pageTitle' => 'Analisis Tes']);
+view('analysis', compact('testCount', 'testedAthletes', 'retestedAthletes', 'completeness', 'categoryRows', 'categoryTotal', 'bmiRows', 'bmiTotal', 'averages', 'vo2maxSummary', 'bleepOverview', 'bleepCategoryRows', 'bleepCategoryTotal', 'bleepSportAnalysis', 'bleepTopAthletes', 'coverageRows', 'recommendations') + ['pageTitle' => 'Analisis Tes']);

@@ -3,8 +3,10 @@ $total = (int) ($overview['total'] ?? 0);
 $tested = (int) ($overview['tested'] ?? 0);
 $participation = $total > 0 ? round($tested / $total * 100, 1) : 0;
 ?>
+<div data-auto-refresh="10000">
 <div class="page-heading">
     <div><p class="eyebrow">RINGKASAN MASTER DATA</p><h1>Summary Atlet</h1><p>Komposisi atlet aktif dan progres keikutsertaan tes fisik.</p></div>
+    <?php if ((Auth::user()['role'] ?? '') === 'superadmin'): ?><a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Input Tes Baru</a><?php endif; ?>
 </div>
 
 <section class="summary-kpis">
@@ -13,6 +15,31 @@ $participation = $total > 0 ? round($tested / $total * 100, 1) : 0;
     <article class="metric-card"><span>Perempuan</span><strong><?= e((int) $overview['female']) ?></strong><small><?= e($total ? round((int) $overview['female'] / $total * 100, 1) : 0) ?>% dari atlet</small></article>
     <article class="metric-card metric-success"><span>Sudah Ikut Tes</span><strong><?= e($tested) ?></strong><small><?= e($participation) ?>% cakupan</small></article>
     <article class="metric-card metric-warning"><span>Belum Ikut Tes</span><strong><?= e((int) $overview['not_tested']) ?></strong><small>Perlu dijadwalkan</small></article>
+</section>
+
+<section class="panel bleep-summary-panel">
+    <div class="panel-header"><div><p class="eyebrow">BLEEP TEST VO2MAX</p><h2>Summary Daya Tahan Aerobik</h2></div><a href="<?= e(base_url('analysis.php')) ?>">Buka analisis →</a></div>
+    <div class="bleep-summary-kpis">
+        <div><span>Total Pelaksanaan</span><strong><?= e((int) ($bleepOverview['total_tests'] ?? 0)) ?></strong><small>Seluruh tes tersimpan</small></div>
+        <div><span>Atlet Sudah Tes</span><strong><?= e((int) ($bleepOverview['tested'] ?? 0)) ?></strong><small>Dari <?= e($total) ?> atlet aktif</small></div>
+        <div><span>Belum Bleep Test</span><strong><?= e((int) ($bleepOverview['not_tested'] ?? 0)) ?></strong><small>Perlu dijadwalkan</small></div>
+        <div><span>Rata-Rata VO2max</span><strong><?= e($bleepOverview['average_vo2max'] ?? '-') ?></strong><small>ml/kg/menit</small></div>
+        <div><span>VO2max Tertinggi</span><strong><?= e($bleepOverview['highest_vo2max'] ?? '-') ?></strong><small>ml/kg/menit</small></div>
+    </div>
+    <div class="bleep-summary-content">
+        <div class="progress-list">
+            <p class="summary-subtitle">CAKUPAN BERDASARKAN STATUS</p>
+            <?php foreach ($bleepStatusRows as $row): $rowTotal = (int) $row['total']; $rowTested = (int) $row['tested']; $rate = $rowTotal ? round($rowTested / $rowTotal * 100, 1) : 0; ?>
+                <div class="progress-row"><div class="progress-copy"><strong><?= e($row['label']) ?></strong><span><?= e($rowTested) ?> dari <?= e($rowTotal) ?> atlet</span></div><div class="progress-track"><span style="width:<?= e($rate) ?>%"></span></div><b><?= e($rate) ?>%</b></div>
+            <?php endforeach; ?>
+        </div>
+        <div class="bleep-sport-summary">
+            <p class="summary-subtitle">CAKUPAN CABOR TERATAS</p>
+            <?php foreach (array_slice($bleepSportRows, 0, 8) as $row): $rate = $row['athletes'] ? round((int) $row['tested'] / (int) $row['athletes'] * 100, 1) : 0; ?>
+                <div><span><strong><?= e($row['name']) ?></strong><small><?= e($row['tested']) ?>/<?= e($row['athletes']) ?> atlet · VO2max <?= e($row['average_vo2max'] ?? '-') ?></small></span><b><?= e($rate) ?>%</b></div>
+            <?php endforeach; ?>
+        </div>
+    </div>
 </section>
 
 <section class="analytics-grid">
@@ -39,6 +66,7 @@ $participation = $total > 0 ? round($tested / $total * 100, 1) : 0;
     <?php foreach ($sportRows as $row): $sportTotal = (int) $row['total']; $sportTested = (int) $row['tested']; $rate = $sportTotal ? round($sportTested / $sportTotal * 100, 1) : 0; ?><tr><td><strong><?= e($row['name']) ?></strong></td><td><?= e($sportTotal) ?></td><td><?= e((int) $row['male']) ?></td><td><?= e((int) $row['female']) ?></td><td><?= e($sportTested) ?></td><td><?= e($sportTotal - $sportTested) ?></td><td><div class="table-progress"><span style="width:<?= e($rate) ?>%"></span></div><small><?= e($rate) ?>%</small></td></tr><?php endforeach; ?>
     </tbody></table></div>
 </section>
+</div>
 
 <section class="panel summary-table-panel">
     <div class="panel-header"><div><p class="eyebrow">TINDAK LANJUT</p><h2>Atlet Belum Mengikuti Tes</h2></div><span class="count-badge">Maks. 100 data</span></div>

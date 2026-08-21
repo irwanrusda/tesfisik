@@ -144,7 +144,6 @@ function physical_test_items(): array
         'sprint_30m' => ['component' => 'Kecepatan', 'detail' => 'Kecepatan Lari', 'method' => 'Lari 30 Meter', 'unit' => 'detik'],
         'illinois' => ['component' => 'Kelincahan', 'detail' => 'Kelincahan Seluruh Tubuh', 'method' => 'Illinois Test', 'unit' => 'detik'],
         'sit_reach' => ['component' => 'Fleksibilitas', 'detail' => '', 'method' => 'Sit and Reach', 'unit' => 'cm'],
-        'bleep_test' => ['component' => 'Daya Tahan Umum', 'detail' => '', 'method' => 'Bleep Test', 'unit' => 'level'],
     ];
 }
 
@@ -153,6 +152,53 @@ function calculate_age(string $birthDate, ?string $atDate = null): int
     $birth = new DateTimeImmutable($birthDate);
     $at = new DateTimeImmutable($atDate ?: 'today');
     return $birth->diff($at)->y;
+}
+
+function bleep_test_protocol(): array
+{
+    $shuttles = [1 => 7, 8, 8, 9, 9, 10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16];
+    $protocol = [];
+    $cumulativeShuttles = 0;
+
+    foreach ($shuttles as $level => $levelShuttles) {
+        $cumulativeShuttles += $levelShuttles;
+        $protocol[$level] = [
+            'level' => $level,
+            'speed' => 8 + (0.5 * $level),
+            'shuttles' => $levelShuttles,
+            'level_distance' => $levelShuttles * 20,
+            'cumulative_shuttles' => $cumulativeShuttles,
+            'cumulative_distance' => $cumulativeShuttles * 20,
+        ];
+    }
+
+    return $protocol;
+}
+
+function bleep_test_metrics(int $level, int $shuttle, int $age): array
+{
+    $protocol = bleep_test_protocol();
+    if (!isset($protocol[$level]) || $shuttle < 0 || $shuttle > $protocol[$level]['shuttles'] || $age < 6 || $age > 100) {
+        throw new InvalidArgumentException('Level Bleep Test atau usia tidak valid.');
+    }
+
+    $previousShuttles = $level > 1 ? $protocol[$level - 1]['cumulative_shuttles'] : 0;
+    $completedShuttles = $previousShuttles + $shuttle;
+    $levelFraction = $protocol[$level]['shuttles'] > 0 ? $shuttle / $protocol[$level]['shuttles'] : 0;
+    $speed = 8 + (0.5 * ($level + $levelFraction));
+    $vo2max = 31.025 + (3.238 * $speed) - (3.248 * $age) + (0.1536 * $speed * $age);
+
+    return [
+        'vo2max' => round($vo2max, 2),
+        'speed' => round($speed, 2),
+        'completed_shuttles' => $completedShuttles,
+        'distance' => $completedShuttles * 20,
+    ];
+}
+
+function calculate_bleep_vo2max(int $level, int $age, int $shuttle = 0): float
+{
+    return bleep_test_metrics($level, $shuttle, $age)['vo2max'];
 }
 
 function uploaded_files(string $field): array

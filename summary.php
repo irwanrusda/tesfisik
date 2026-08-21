@@ -50,4 +50,36 @@ $notTested = $pdo->query(
      LIMIT 100"
 )->fetchAll();
 
-view('summary', compact('overview', 'statusRows', 'sportRows', 'notTested') + ['pageTitle' => 'Summary Atlet']);
+$bleepOverview = $pdo->query(
+    "SELECT
+        COUNT(*) AS total_tests,
+        COUNT(DISTINCT master_person_id) AS tested,
+        ROUND(AVG(vo2max), 2) AS average_vo2max,
+        MAX(vo2max) AS highest_vo2max,
+        MAX(test_date) AS latest_test
+     FROM bleep_tests"
+)->fetch();
+$bleepTested = (int) ($bleepOverview['tested'] ?? 0);
+$bleepOverview['not_tested'] = max(0, (int) ($overview['total'] ?? 0) - $bleepTested);
+
+$bleepStatusRows = $pdo->query(
+    "SELECT COALESCE(NULLIF(mp.development_status, ''), 'Belum Ditentukan') AS label,
+        COUNT(mp.id) AS total,
+        SUM(EXISTS (SELECT 1 FROM bleep_tests bt WHERE bt.master_person_id = mp.id)) AS tested
+     FROM master_people mp
+     WHERE mp.person_type = 'Atlet' AND mp.is_active = 1
+     GROUP BY COALESCE(NULLIF(mp.development_status, ''), 'Belum Ditentukan')
+     ORDER BY FIELD(label, 'Andalan', 'Prioritas', 'Potensial', 'Belum Ditentukan'), label"
+)->fetchAll();
+
+$bleepSportRows = $pdo->query(
+    "SELECT s.name, COUNT(mp.id) AS athletes,
+        SUM(EXISTS (SELECT 1 FROM bleep_tests bt WHERE bt.master_person_id = mp.id)) AS tested,
+        ROUND((SELECT AVG(bt.vo2max) FROM bleep_tests bt WHERE bt.sport = s.name), 2) AS average_vo2max
+     FROM sports s
+     JOIN master_people mp ON mp.sport_id = s.id AND mp.person_type = 'Atlet' AND mp.is_active = 1
+     GROUP BY s.id, s.name
+     ORDER BY tested DESC, athletes DESC, s.name"
+)->fetchAll();
+
+view('summary', compact('overview', 'statusRows', 'sportRows', 'notTested', 'bleepOverview', 'bleepStatusRows', 'bleepSportRows') + ['pageTitle' => 'Summary Atlet']);

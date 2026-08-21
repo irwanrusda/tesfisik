@@ -15,6 +15,12 @@ $resultStatement = $pdo->prepare('SELECT * FROM test_results WHERE athlete_test_
 $resultStatement->execute([$id]);
 $results = [];
 foreach ($resultStatement->fetchAll() as $item) $results[$item['test_code']] = $item;
+$bleepTest = null;
+if ($test['master_person_id']) {
+    $bleepStatement = $pdo->prepare('SELECT * FROM bleep_tests WHERE master_person_id = ? ORDER BY test_date DESC, id DESC LIMIT 1');
+    $bleepStatement->execute([$test['master_person_id']]);
+    $bleepTest = $bleepStatement->fetch() ?: null;
+}
 $photoStatement = $pdo->prepare('SELECT id, original_name FROM test_photos WHERE athlete_test_id = ? ORDER BY created_at, id');
 $photoStatement->execute([$id]);
 $photos = $photoStatement->fetchAll();
@@ -24,7 +30,6 @@ $groups = [
     ['component' => 'KECEPATAN', 'codes' => ['sprint_30m']],
     ['component' => 'KELINCAHAN', 'codes' => ['illinois']],
     ['component' => 'FLEKSIBILITAS', 'codes' => ['sit_reach']],
-    ['component' => 'DAYA TAHAN UMUM', 'codes' => ['bleep_test']],
 ];
 ?>
 <!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Blanko <?= e($test['athlete_name']) ?></title><link rel="icon" type="image/svg+xml" href="https://konisumbar.org/assets/img/logo_no_text.svg"><link rel="stylesheet" href="<?= e(base_url('assets/css/print.css')) ?>"></head><body>
@@ -38,7 +43,16 @@ $groups = [
         <tr><?php if ($index === 0): ?><td rowspan="<?= e(count($group['codes'])) ?>"><?= e($number + 1) ?></td><?php endif; ?><td><?= $index === 0 ? '<strong>' . e($group['component']) . '</strong><br>' : '' ?><?= e($definition['detail']) ?></td><td><?= e($definition['method']) ?></td><td><?= e($result['result_value'] ?? '') ?> <?= e($definition['unit']) ?></td><td><?= e($result['category'] ?? '') ?></td><td><?= e($result['examiner_notes'] ?? '') ?></td></tr>
         <?php endforeach; ?>
     <?php endforeach; ?>
+        <tr>
+            <td><?= e(count($groups) + 1) ?></td>
+            <td><strong>DAYA TAHAN UMUM</strong><br><?= $bleepTest ? 'Level ' . e($bleepTest['level']) . ' / Shuttle ' . e($bleepTest['shuttle']) : '' ?></td>
+            <td>Bleep Test 20 Meter<?= $bleepTest ? '<br><small>' . e(format_date($bleepTest['test_date'])) . '</small>' : '' ?></td>
+            <td><?= $bleepTest ? e($bleepTest['vo2max']) . ' ml/kg/menit' : '' ?></td>
+            <td><?= e($bleepTest['category'] ?? '') ?></td>
+            <td><?= e($bleepTest['notes'] ?? '') ?></td>
+        </tr>
     </tbody></table></section>
+    <?php if ($bleepTest): ?><p class="print-bleep-summary"><strong>Ringkasan Bleep Test:</strong> <?= e($bleepTest['completed_shuttles']) ?> total shuttle, <?= e($bleepTest['distance_m']) ?> meter, kecepatan akhir <?= e($bleepTest['speed_kmh']) ?> km/jam, VO2max <?= e($bleepTest['vo2max']) ?> ml/kg/menit.</p><?php endif; ?>
     <?php if ($test['notes']): ?><p class="print-notes"><strong>Catatan:</strong> <?= e($test['notes']) ?></p><?php endif; ?>
     <?php if ($photos): ?><section class="print-documentation"><h3>III. DOKUMENTASI KEGIATAN</h3><div><?php foreach ($photos as $photo): ?><figure><img src="<?= e(signed_photo_url((int) $photo['id'], 1800)) ?>" alt="<?= e($photo['original_name']) ?>"><figcaption><?= e($photo['original_name']) ?></figcaption></figure><?php endforeach; ?></div></section><?php endif; ?>
     <footer class="signature"><div></div><div><p><?= e($test['test_place']) ?>, <?= e(format_date($test['test_date'], 'd F Y')) ?></p><strong>PANITIA TES,</strong><span></span><p>(........................................)</p></div></footer>

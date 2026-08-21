@@ -8,6 +8,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS test_results;
 DROP TABLE IF EXISTS test_photos;
+DROP TABLE IF EXISTS bleep_tests;
 DROP TABLE IF EXISTS athlete_tests;
 DROP TABLE IF EXISTS master_people;
 DROP TABLE IF EXISTS sports;
@@ -115,6 +116,34 @@ CREATE TABLE test_photos (
     INDEX idx_test_photos_athlete_test (athlete_test_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE bleep_tests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    test_number VARCHAR(30) NOT NULL UNIQUE,
+    master_person_id BIGINT UNSIGNED NOT NULL,
+    athlete_name VARCHAR(150) NOT NULL,
+    sport VARCHAR(100) NOT NULL,
+    gender ENUM('L', 'P') NOT NULL,
+    birth_date DATE NOT NULL,
+    test_date DATE NOT NULL,
+    test_place VARCHAR(100) NOT NULL DEFAULT 'Padang',
+    level TINYINT UNSIGNED NOT NULL,
+    shuttle SMALLINT UNSIGNED NOT NULL,
+    completed_shuttles SMALLINT UNSIGNED NOT NULL,
+    distance_m SMALLINT UNSIGNED NOT NULL,
+    speed_kmh DECIMAL(5,2) NOT NULL,
+    vo2max DECIMAL(5,2) NOT NULL,
+    category VARCHAR(50) NULL,
+    notes VARCHAR(255) NULL,
+    created_by BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_bleep_tests_master_person FOREIGN KEY (master_person_id) REFERENCES master_people(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_bleep_tests_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    INDEX idx_bleep_tests_athlete (master_person_id),
+    INDEX idx_bleep_tests_date (test_date),
+    INDEX idx_bleep_tests_sport (sport)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE migrations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     migration VARCHAR(255) NOT NULL UNIQUE,
@@ -135,6 +164,7 @@ INSERT INTO migrations (migration) VALUES
     ('003_create_test_results.sql'),
     ('004_create_master_people.sql'),
     ('005_add_input_panitia_roles.sql'),
-    ('006_create_test_photos.sql');
+    ('006_create_test_photos.sql'),
+    ('007_create_bleep_tests.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;

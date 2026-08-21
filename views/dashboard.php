@@ -4,6 +4,7 @@
         <h1>Dashboard Tes Fisik</h1>
         <p>Pantau data pengukuran kondisi fisik atlet Sumatera Barat.</p>
     </div>
+    <a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Input Tes Baru</a>
 </div>
 
 <section class="stats-grid">

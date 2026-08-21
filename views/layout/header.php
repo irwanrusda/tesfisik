@@ -39,10 +39,23 @@ $role = $user['role'] ?? '';
                     <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Analisis
                 </a>
             <?php endif; ?>
-            <?php if ($role === 'input'): ?>
-                <a class="nav-item <?= in_array($currentPage, ['test-create.php', 'test-edit.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('test-create.php')) ?>">
-                    <span class="nav-icon"><i class="fa-solid fa-file-circle-plus"></i></span> Input Data
-                </a>
+            <?php if (in_array($role, ['superadmin', 'input'], true)): ?>
+                <?php $inputMenuOpen = in_array($currentPage, ['test-create.php', 'test-edit.php', 'bleep-test.php'], true); ?>
+                <div class="nav-accordion <?= $inputMenuOpen ? 'open' : '' ?>" data-nav-accordion>
+                    <button class="nav-item nav-accordion-trigger <?= $inputMenuOpen ? 'active' : '' ?>" type="button" data-nav-accordion-trigger aria-expanded="<?= $inputMenuOpen ? 'true' : 'false' ?>">
+                        <span class="nav-icon"><i class="fa-solid fa-file-circle-plus"></i></span>
+                        <span>Input Data</span>
+                        <i class="fa-solid fa-chevron-down nav-chevron"></i>
+                    </button>
+                    <div class="nav-submenu">
+                        <a class="nav-subitem <?= in_array($currentPage, ['test-create.php', 'test-edit.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('test-create.php')) ?>">
+                            <i class="fa-solid fa-person-running"></i><span><strong>Tes Fisik</strong><small>Kekuatan, power, dan lainnya</small></span>
+                        </a>
+                        <a class="nav-subitem <?= $currentPage === 'bleep-test.php' ? 'active' : '' ?>" href="<?= e(base_url('bleep-test.php')) ?>">
+                            <i class="fa-solid fa-heart-pulse"></i><span><strong>Bleep Test VO2max</strong><small>Daya tahan aerobik 20 meter</small></span>
+                        </a>
+                    </div>
+                </div>
             <?php endif; ?>
             <a class="nav-item <?= in_array($currentPage, ['reports.php', 'test-view.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('reports.php')) ?>">
                 <span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span> Laporan
@@ -66,6 +79,7 @@ $role = $user['role'] ?? '';
             </form>
         </div>
     </aside>
+    <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="Tutup menu"></button>
     <div class="main-wrap">
         <header class="topbar">
             <button class="menu-toggle" id="menuToggle" type="button" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>

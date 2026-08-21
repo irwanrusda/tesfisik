@@ -1,12 +1,36 @@
 const menuToggle = document.getElementById('menuToggle');
 const sidebar = document.getElementById('sidebar');
-menuToggle?.addEventListener('click', () => sidebar?.classList.toggle('open'));
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+function toggleSidebar(force) {
+    if (!sidebar) return;
+    const open = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+    sidebar.classList.toggle('open', open);
+    sidebarBackdrop?.classList.toggle('open', open);
+    document.body.classList.toggle('sidebar-open', open);
+}
+menuToggle?.addEventListener('click', () => toggleSidebar());
+sidebarBackdrop?.addEventListener('click', () => toggleSidebar(false));
+sidebar?.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => toggleSidebar(false)));
+
+document.querySelectorAll('[data-nav-accordion-trigger]').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+        const accordion = trigger.closest('[data-nav-accordion]');
+        const isOpen = accordion?.classList.toggle('open') || false;
+        trigger.setAttribute('aria-expanded', String(isOpen));
+    });
+});
 
 document.querySelectorAll('form[data-confirm]').forEach((form) => {
     form.addEventListener('submit', (event) => {
         if (!window.confirm(form.dataset.confirm || 'Lanjutkan?')) event.preventDefault();
     });
 });
+
+const autoRefresh = document.querySelector('[data-auto-refresh]');
+if (autoRefresh) {
+    const interval = Number(autoRefresh.dataset.autoRefresh) || 10000;
+    window.setTimeout(() => window.location.reload(), interval);
+}
 
 const heightInput = document.querySelector('[data-height]');
 const weightInput = document.querySelector('[data-weight]');
@@ -19,6 +43,127 @@ function updateBmi() {
 }
 heightInput?.addEventListener('input', updateBmi);
 weightInput?.addEventListener('input', updateBmi);
+
+const bleepForm = document.querySelector('[data-bleep-form]');
+const bleepProtocolShuttles = [0, 7, 8, 8, 9, 9, 10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16];
+const bleepLevelInput = bleepForm?.querySelector('[data-bleep-level]');
+const bleepShuttleInput = bleepForm?.querySelector('[data-bleep-shuttle]');
+function updateBleepMetrics() {
+    if (!bleepForm || !bleepLevelInput || !bleepShuttleInput) return;
+    let level = Math.min(21, Math.max(1, Number(bleepLevelInput.value) || 1));
+    const maxShuttles = bleepProtocolShuttles[level];
+    let shuttle = Math.min(maxShuttles, Math.max(0, Number(bleepShuttleInput.value) || 0));
+    bleepLevelInput.value = level;
+    bleepShuttleInput.value = shuttle;
+    bleepShuttleInput.max = maxShuttles;
+    const previousShuttles = bleepProtocolShuttles.slice(1, level).reduce((sum, value) => sum + value, 0);
+    const completedShuttles = previousShuttles + shuttle;
+    const speed = 8 + (0.5 * (level + (shuttle / maxShuttles)));
+    const birthDate = bleepForm.querySelector('[data-bleep-birth-date]')?.value;
+    const testDate = bleepForm.querySelector('[data-bleep-test-date]')?.value;
+    const birth = birthDate ? new Date(`${birthDate}T00:00:00`) : null;
+    const testedAt = testDate ? new Date(`${testDate}T00:00:00`) : null;
+    let age = 20;
+    if (birth && testedAt && !Number.isNaN(birth.getTime()) && !Number.isNaN(testedAt.getTime())) {
+        age = testedAt.getFullYear() - birth.getFullYear();
+        if (testedAt.getMonth() < birth.getMonth() || (testedAt.getMonth() === birth.getMonth() && testedAt.getDate() < birth.getDate())) age--;
+    }
+    const vo2max = 31.025 + (3.238 * speed) - (3.248 * age) + (0.1536 * speed * age);
+    bleepForm.querySelector('[data-vo2max]').textContent = vo2max.toFixed(2);
+    bleepForm.querySelector('[data-bleep-speed]').textContent = speed.toFixed(2);
+    bleepForm.querySelector('[data-total-shuttles]').textContent = completedShuttles;
+    bleepForm.querySelector('[data-bleep-distance]').textContent = completedShuttles * 20;
+    bleepForm.querySelector('[data-shuttle-limit]').textContent = `Maksimal ${maxShuttles} shuttle pada level ini`;
+    document.querySelectorAll('[data-protocol-row]').forEach((row) => row.classList.toggle('active', Number(row.dataset.protocolRow) === level));
+}
+bleepForm?.querySelectorAll('[data-step]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const direction = Number(button.dataset.direction);
+        if (button.dataset.step === 'level') {
+            bleepLevelInput.value = Number(bleepLevelInput.value || 1) + direction;
+            bleepShuttleInput.value = 0;
+        } else {
+            const level = Number(bleepLevelInput.value || 1);
+            const shuttle = Number(bleepShuttleInput.value || 0);
+            const maxShuttles = bleepProtocolShuttles[level];
+            if (direction > 0 && shuttle >= maxShuttles && level < 21) {
+                bleepLevelInput.value = level + 1;
+                bleepShuttleInput.value = 0;
+            } else if (direction < 0 && shuttle <= 0 && level > 1) {
+                bleepLevelInput.value = level - 1;
+                bleepShuttleInput.value = bleepProtocolShuttles[level - 1];
+            } else {
+                bleepShuttleInput.value = shuttle + direction;
+            }
+        }
+        updateBleepMetrics();
+    });
+});
+bleepLevelInput?.addEventListener('input', () => {
+    bleepShuttleInput.value = 0;
+    updateBleepMetrics();
+});
+bleepShuttleInput?.addEventListener('input', () => {
+    let level = Math.min(21, Math.max(1, Number(bleepLevelInput.value) || 1));
+    let shuttle = Math.max(0, Number(bleepShuttleInput.value) || 0);
+    while (level < 21 && shuttle > bleepProtocolShuttles[level]) {
+        shuttle -= bleepProtocolShuttles[level];
+        level++;
+    }
+    bleepLevelInput.value = level;
+    bleepShuttleInput.value = Math.min(shuttle, bleepProtocolShuttles[level]);
+    updateBleepMetrics();
+});
+bleepForm?.querySelector('[data-bleep-birth-date]')?.addEventListener('change', updateBleepMetrics);
+bleepForm?.querySelector('[data-bleep-test-date]')?.addEventListener('change', updateBleepMetrics);
+updateBleepMetrics();
+
+const bleepAthleteDropdown = document.querySelector('[data-bleep-athlete-dropdown]');
+const bleepAthleteSearch = document.querySelector('[data-bleep-athlete-search]');
+const bleepAthleteValue = document.querySelector('[data-bleep-athlete-value]');
+const bleepAthleteOptions = Array.from(document.querySelectorAll('[data-bleep-athlete-option]'));
+const bleepAthleteEmpty = document.querySelector('[data-bleep-athlete-empty]');
+function filterBleepAthletes() {
+    const keyword = bleepAthleteSearch?.value.trim().toLocaleLowerCase('id-ID') || '';
+    let visible = 0;
+    bleepAthleteOptions.forEach((option) => {
+        const matches = option.dataset.name.toLocaleLowerCase('id-ID').includes(keyword) || option.dataset.sport.toLocaleLowerCase('id-ID').includes(keyword);
+        option.hidden = !matches;
+        if (matches) visible++;
+    });
+    if (bleepAthleteEmpty) bleepAthleteEmpty.hidden = visible > 0;
+    bleepAthleteDropdown?.classList.add('open');
+}
+bleepAthleteSearch?.addEventListener('focus', filterBleepAthletes);
+bleepAthleteSearch?.addEventListener('input', () => {
+    if (bleepAthleteValue) bleepAthleteValue.value = '';
+    filterBleepAthletes();
+});
+bleepAthleteOptions.forEach((option) => option.addEventListener('click', () => {
+    bleepAthleteOptions.forEach((item) => item.setAttribute('aria-selected', 'false'));
+    option.setAttribute('aria-selected', 'true');
+    bleepAthleteValue.value = option.dataset.id;
+    bleepAthleteSearch.value = `${option.dataset.name} - ${option.dataset.sport}`;
+    const birthDateInput = bleepForm?.querySelector('[data-bleep-birth-date]');
+    if (birthDateInput) birthDateInput.value = option.dataset.birthDate || '';
+    bleepAthleteDropdown?.classList.remove('open');
+    updateBleepMetrics();
+}));
+const selectedBleepAthlete = bleepAthleteOptions.find((option) => option.dataset.id === bleepAthleteValue?.value);
+if (selectedBleepAthlete) bleepAthleteSearch.value = `${selectedBleepAthlete.dataset.name} - ${selectedBleepAthlete.dataset.sport}`;
+document.addEventListener('click', (event) => {
+    if (bleepAthleteDropdown && !bleepAthleteDropdown.contains(event.target)) bleepAthleteDropdown.classList.remove('open');
+});
+bleepForm?.addEventListener('submit', (event) => {
+    if (!bleepAthleteValue?.value) {
+        event.preventDefault();
+        bleepAthleteSearch?.setCustomValidity('Pilih atlet dari hasil pencarian.');
+        bleepAthleteSearch?.reportValidity();
+        bleepAthleteDropdown?.classList.add('open');
+    } else {
+        bleepAthleteSearch?.setCustomValidity('');
+    }
+});
 
 const athleteDropdown = document.querySelector('[data-athlete-dropdown]');
 const athleteCombobox = document.querySelector('[data-athlete-combobox]');
