@@ -15,7 +15,7 @@ $role = $user['role'] ?? '';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <link rel="stylesheet" href="<?= e(base_url('assets/css/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(base_url('assets/css/app.css?v=' . filemtime(BASE_PATH . '/assets/css/app.css'))) ?>">
 </head>
 <body>
 <div class="app-shell">
@@ -75,6 +75,9 @@ $role = $user['role'] ?? '';
                 </a>
                 <a class="nav-item <?= $currentPage === 'audit-logs.php' ? 'active' : '' ?>" href="<?= e(base_url('audit-logs.php')) ?>">
                     <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> Audit Log
+                </a>
+                <a class="nav-item <?= $currentPage === 'test-settings.php' ? 'active' : '' ?>" href="<?= e(base_url('test-settings.php')) ?>">
+                    <span class="nav-icon"><i class="fa-solid fa-sliders"></i></span> Konfigurasi Tes
                 </a>
             <?php endif; ?>
         </nav>

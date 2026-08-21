@@ -51,10 +51,6 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
                 <?php endforeach; ?>
             </div>
         </section>
-    <?php else: ?>
-        <section class="panel form-section station-info-panel">
-            <div class="section-number">02</div><div class="section-title"><p class="eyebrow">POS TES</p><h2>Input Hasil Dipisah per Sub Menu</h2><p>Setelah data atlet disimpan, petugas tiap pos dapat membuka menu Sit Up, Push Up, Pull Up, Medicine Ball, Vertical Jump, Sprint 30m, Illinois, Sit and Reach, atau Bleep Test untuk mengisi skor sesuai atlet yang sedang menunggu.</p></div>
-        </section>
     <?php endif; ?>
     <section class="panel form-section documentation-form-section">
         <div class="section-number"><?= $showMeasurements ? '03' : '03' ?></div><div class="section-title documentation-title"><div><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2><p>Ambil foto langsung atau pilih beberapa dokumentasi dari galeri perangkat.</p></div><span class="documentation-title-icon"><i class="fa-solid fa-camera-retro"></i></span></div>

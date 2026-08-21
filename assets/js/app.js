@@ -29,11 +29,24 @@ function toggleSidebar(force) {
 menuToggle?.addEventListener('click', () => toggleSidebar());
 sidebarBackdrop?.addEventListener('click', () => toggleSidebar(false));
 sidebar?.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => toggleSidebar(false)));
+window.addEventListener('pageshow', () => toggleSidebar(false));
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 800) toggleSidebar(false);
+});
 
 document.querySelectorAll('[data-nav-accordion-trigger]').forEach((trigger) => {
     trigger.addEventListener('click', () => {
         const accordion = trigger.closest('[data-nav-accordion]');
         const isOpen = accordion?.classList.toggle('open') || false;
+        trigger.setAttribute('aria-expanded', String(isOpen));
+    });
+});
+
+document.querySelectorAll('[data-station-toggle]').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+        if (window.innerWidth > 680) return;
+        const card = trigger.closest('[data-station-card]');
+        const isOpen = card?.classList.toggle('expanded') || false;
         trigger.setAttribute('aria-expanded', String(isOpen));
     });
 });
@@ -348,7 +361,6 @@ if (selectedAthlete) {
 }
 
 const photoInputs = Array.from(document.querySelectorAll('[data-photo-input]'));
-const photoPreview = document.querySelector('[data-photo-preview]');
 
 function compressPhoto(file) {
     return new Promise((resolve, reject) => {
@@ -389,10 +401,11 @@ function compressPhoto(file) {
     });
 }
 
-function renderPhotoPreviews() {
+function renderPhotoPreviews(input) {
+    const photoPreview = input.closest('form')?.querySelector('[data-photo-preview]');
     if (!photoPreview) return;
     photoPreview.replaceChildren();
-    photoInputs.flatMap((input) => Array.from(input.files || [])).forEach((file) => {
+    Array.from(input.files || []).forEach((file) => {
         const card = document.createElement('div');
         card.className = 'photo-preview-card';
         const image = document.createElement('img');
@@ -408,14 +421,11 @@ function renderPhotoPreviews() {
 
 photoInputs.forEach((input) => {
     input.addEventListener('change', async () => {
-        const otherCount = photoInputs
-            .filter((item) => item !== input)
-            .reduce((total, item) => total + (item.files?.length || 0), 0);
         const selectedFiles = Array.from(input.files || []);
-        if (otherCount + selectedFiles.length > 10) {
+        if (selectedFiles.length > 10) {
             input.value = '';
             window.alert('Maksimal 10 foto dapat diunggah dalam satu penyimpanan.');
-            renderPhotoPreviews();
+            renderPhotoPreviews(input);
             return;
         }
 
@@ -428,10 +438,10 @@ photoInputs.forEach((input) => {
             const transfer = new DataTransfer();
             compressedFiles.forEach((file) => transfer.items.add(file));
             input.files = transfer.files;
-            renderPhotoPreviews();
+            renderPhotoPreviews(input);
         } catch (error) {
             input.value = '';
-            renderPhotoPreviews();
+            renderPhotoPreviews(input);
             window.alert(error.message || 'Foto gagal diproses.');
         } finally {
             input.disabled = false;

@@ -1,17 +1,21 @@
 <div class="page-heading station-heading">
     <div><p class="eyebrow">POS INPUT TES</p><h1><?= e($item['method']) ?></h1><p><?= e($item['component']) ?><?= $item['detail'] !== '' ? ' · ' . e($item['detail']) : '' ?>. Petugas pos cukup pilih atlet yang menunggu, isi skor, lalu simpan.</p></div>
-    <a class="btn btn-light" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a>
+    <a class="btn btn-light station-register-button" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a>
 </div>
 <section class="station-current panel">
-    <div><span class="station-current-label">Pos aktif</span><strong><?= e($item['method']) ?></strong><small><?= e($item['component']) ?><?= $item['detail'] !== '' ? ' · ' . e($item['detail']) : '' ?> · satuan <?= e($item['unit']) ?></small></div>
-    <span class="station-current-date"><?= e(format_date($date)) ?></span>
-</section>
-<section class="station-tabs panel" aria-label="Pilih pos tes">
-    <?php foreach ($items as $itemCode => $definition): ?>
-        <a class="station-tab <?= $itemCode === $code ? 'active' : '' ?>" href="<?= e(base_url('test-station.php?code=' . urlencode($itemCode) . '&date=' . urlencode($date) . '&status=' . urlencode($status))) ?>">
-            <strong><?= e($definition['method']) ?></strong><small><?= e($definition['component']) ?> · <?= e($definition['unit']) ?></small>
-        </a>
-    <?php endforeach; ?>
+    <div class="station-current-main">
+        <span class="station-current-label">Pos aktif</span>
+        <strong class="station-current-title"><?= e($item['method']) ?></strong>
+        <div class="station-current-meta">
+            <span><?= e($item['component']) ?></span>
+            <?php if ($item['detail'] !== ''): ?><span><?= e($item['detail']) ?></span><?php endif; ?>
+            <span>Satuan: <?= e($item['unit']) ?></span>
+        </div>
+        <?php if ($code === 'sit_up'): ?><p class="station-condition-note">Jumlah gerakan selama <?= e($conditions['sit_up_duration_seconds']) ?> detik.</p><?php endif; ?>
+        <?php if ($code === 'push_up'): ?><p class="station-condition-note">Jumlah gerakan selama <?= e($conditions['push_up_duration_seconds']) ?> detik.</p><?php endif; ?>
+        <?php if ($code === 'pull_up'): ?><p class="station-condition-note">Laki-laki: jumlah angkat badan. Perempuan: <?= $conditions['female_pull_up_mode'] === 'hold' ? 'menahan badan dalam detik' : 'jumlah angkat badan' ?>.</p><?php endif; ?>
+    </div>
+    <div class="station-current-date"><i class="fa-regular fa-calendar"></i><span><?= e(format_date($date)) ?></span></div>
 </section>
 <section class="summary-kpis station-kpis">
     <div class="metric-card metric-primary"><span>Total</span><strong><?= e((int) ($counts['total'] ?? 0)) ?></strong><small>Atlet hari ini</small></div>
@@ -32,22 +36,30 @@
     <div class="station-list">
         <?php if (!$rows): ?><p class="empty-state">Belum ada atlet pada filter ini.</p><?php endif; ?>
         <?php foreach ($rows as $row): ?>
-            <article class="station-card <?= $row['result_value'] === null ? 'waiting' : 'done' ?>">
-                <div class="station-athlete">
+            <?php $rowDefinition = $row['input_definition']; ?>
+            <article class="station-card <?= $row['result_value'] === null ? 'waiting' : 'done' ?>" data-station-card>
+                <button class="station-athlete station-athlete-toggle" type="button" data-station-toggle aria-expanded="false">
                     <span class="person-monogram"><?= e(strtoupper(substr($row['athlete_name'], 0, 1))) ?></span>
-                    <div class="station-athlete-copy"><strong><?= e($row['athlete_name']) ?></strong><div class="station-athlete-meta"><span><?= e($row['sport']) ?></span><span><?= e($row['gender'] === 'L' ? 'Laki-laki' : 'Perempuan') ?></span><span><?= e($row['test_number']) ?></span></div></div>
+                    <div class="station-athlete-copy"><strong><?= e($row['athlete_name']) ?></strong><div class="station-athlete-meta"><span><?= e($row['sport']) ?></span><span class="station-birth-date"><i class="fa-regular fa-calendar"></i><?= e(format_date($row['birth_date'])) ?></span><span class="station-meta-secondary"><?= e($row['gender'] === 'L' ? 'Laki-laki' : 'Perempuan') ?></span><span class="station-meta-secondary"><?= e($row['test_number']) ?></span></div></div>
                     <span class="station-status-pill <?= $row['result_value'] === null ? 'waiting' : 'done' ?>"><?= $row['result_value'] === null ? 'Menunggu' : 'Selesai' ?></span>
-                </div>
-                <form class="station-score-form" method="post">
+                    <i class="fa-solid fa-chevron-down station-expand-icon"></i>
+                </button>
+                <form class="station-score-form" method="post" enctype="multipart/form-data">
                     <?= csrf_field() ?>
                     <input type="hidden" name="test_code" value="<?= e($code) ?>">
                     <input type="hidden" name="date" value="<?= e($date) ?>">
                     <input type="hidden" name="status" value="<?= e($status) ?>">
                     <input type="hidden" name="q" value="<?= e($q) ?>">
                     <input type="hidden" name="athlete_test_id" value="<?= e($row['id']) ?>">
-                    <label class="field compact"><span>Skor (<?= e($item['unit']) ?>)</span><input type="number" step="0.01" min="0" name="result_value" value="<?= e($row['result_value'] ?? '') ?>" required></label>
-                    <label class="field compact"><span>Kategori</span><select name="category"><option value="">Pilih kategori</option><?php foreach ($categories as $category): ?><option value="<?= e($category) ?>" <?= $row['category'] === $category ? 'selected' : '' ?>><?= e($category) ?></option><?php endforeach; ?></select></label>
+                    <label class="field compact"><span><?= e($rowDefinition['method']) ?> (<?= e($rowDefinition['unit']) ?>)</span><input type="number" step="0.01" min="0" name="result_value" value="<?= e($row['result_value'] ?? '') ?>" required><small class="field-help"><?= e($rowDefinition['instruction']) ?></small></label>
+                    <label class="field compact station-category-field"><span>Kategori</span><select name="category"><option value="">Pilih kategori</option><?php foreach ($categories as $category): ?><option value="<?= e($category) ?>" <?= $row['category'] === $category ? 'selected' : '' ?>><?= e($category) ?></option><?php endforeach; ?></select></label>
                     <label class="field compact"><span>Ket/Paraf</span><input name="examiner_notes" value="<?= e($row['examiner_notes'] ?? '') ?>" placeholder="Opsional"></label>
+                    <div class="station-documentation">
+                        <div class="station-documentation-heading"><span><i class="fa-solid fa-camera"></i></span><div><p class="eyebrow">DOKUMENTASI</p><strong>Foto Kegiatan Tes</strong></div></div>
+                        <label class="station-photo-upload"><input type="file" name="station_photos[]" accept="image/*" multiple data-photo-input><i class="fa-solid fa-paperclip"></i><span>Lampirkan foto pos</span></label>
+                        <div class="station-photo-preview" data-photo-preview></div>
+                        <?php if ($row['station_photos']): ?><div class="station-photo-list"><?php foreach ($row['station_photos'] as $photo): ?><a href="<?= e(signed_photo_url((int) $photo['id'])) ?>" target="_blank"><img src="<?= e(signed_photo_url((int) $photo['id'])) ?>" alt="<?= e($photo['original_name']) ?>" loading="lazy"><span><?= e($photo['original_name']) ?></span></a><?php endforeach; ?></div><?php endif; ?>
+                    </div>
                     <button class="btn btn-primary" type="submit">Simpan</button>
                 </form>
             </article>

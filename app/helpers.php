@@ -147,6 +147,64 @@ function physical_test_items(): array
     ];
 }
 
+function test_condition_defaults(): array
+{
+    return [
+        'sit_up_duration_seconds' => '60',
+        'push_up_duration_seconds' => '60',
+        'female_pull_up_mode' => 'repetitions',
+    ];
+}
+
+function test_conditions(?PDO $pdo = null): array
+{
+    $conditions = test_condition_defaults();
+    try {
+        $pdo ??= Database::connection();
+        $rows = $pdo->query('SELECT setting_key, setting_value FROM test_settings')->fetchAll();
+        foreach ($rows as $row) {
+            if (array_key_exists($row['setting_key'], $conditions) && $row['setting_value'] !== '') {
+                $conditions[$row['setting_key']] = $row['setting_value'];
+            }
+        }
+    } catch (Throwable) {
+        // Defaults keep test stations usable before the migration is run.
+    }
+    return $conditions;
+}
+
+function physical_test_input_definition(string $code, string $gender, ?array $conditions = null): array
+{
+    $items = physical_test_items();
+    if (!isset($items[$code])) {
+        throw new InvalidArgumentException('Komponen tes tidak ditemukan.');
+    }
+
+    $conditions ??= test_conditions();
+    $definition = $items[$code];
+    $definition['instruction'] = '';
+
+    if ($code === 'sit_up') {
+        $duration = max(1, (int) ($conditions['sit_up_duration_seconds'] ?? 60));
+        $definition['instruction'] = "Hitung jumlah Sit Up selama {$duration} detik.";
+    } elseif ($code === 'push_up') {
+        $duration = max(1, (int) ($conditions['push_up_duration_seconds'] ?? 60));
+        $definition['instruction'] = "Hitung jumlah Push Up selama {$duration} detik.";
+    } elseif ($code === 'pull_up') {
+        if ($gender === 'P' && ($conditions['female_pull_up_mode'] ?? 'repetitions') === 'hold') {
+            $definition['method'] = 'Menahan Badan';
+            $definition['unit'] = 'detik';
+            $definition['instruction'] = 'Catat waktu atlet perempuan menahan badan dalam satuan detik.';
+        } elseif ($gender === 'P') {
+            $definition['instruction'] = 'Hitung jumlah angkat badan atlet perempuan.';
+        } else {
+            $definition['instruction'] = 'Hitung jumlah angkat badan atlet laki-laki.';
+        }
+    }
+
+    return $definition;
+}
+
 function calculate_age(string $birthDate, ?string $atDate = null): int
 {
     $birth = new DateTimeImmutable($birthDate);
@@ -282,7 +340,7 @@ function uploaded_files(string $field): array
     return $normalized;
 }
 
-function store_test_photos(PDO $pdo, int $testId, array $files, int $userId): array
+function store_test_photos(PDO $pdo, int $testId, array $files, int $userId, ?string $testCode = null): array
 {
     if (!$files) {
         return [];
@@ -297,7 +355,7 @@ function store_test_photos(PDO $pdo, int $testId, array $files, int $userId): ar
     }
 
     $allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    $statement = $pdo->prepare('INSERT INTO test_photos (athlete_test_id, file_name, original_name, mime_type, file_size, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)');
+    $statement = $pdo->prepare('INSERT INTO test_photos (athlete_test_id, test_code, file_name, original_name, mime_type, file_size, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?)');
     $storedPaths = [];
 
     try {
@@ -322,7 +380,7 @@ function store_test_photos(PDO $pdo, int $testId, array $files, int $userId): ar
             }
             $storedPaths[] = $target;
             $originalName = substr(basename(str_replace('\\', '/', $file['name'])), 0, 255);
-            $statement->execute([$testId, $fileName, $originalName, $mimeType, $file['size'], $userId]);
+            $statement->execute([$testId, $testCode, $fileName, $originalName, $mimeType, $file['size'], $userId]);
         }
     } catch (Throwable $exception) {
         foreach ($storedPaths as $path) {

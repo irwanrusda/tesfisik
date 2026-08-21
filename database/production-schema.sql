@@ -106,6 +106,7 @@ CREATE TABLE test_results (
 CREATE TABLE test_photos (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     athlete_test_id BIGINT UNSIGNED NOT NULL,
+    test_code VARCHAR(40) NULL,
     file_name VARCHAR(255) NOT NULL,
     original_name VARCHAR(255) NOT NULL,
     mime_type VARCHAR(50) NOT NULL,
@@ -114,7 +115,8 @@ CREATE TABLE test_photos (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_test_photos_athlete_test FOREIGN KEY (athlete_test_id) REFERENCES athlete_tests(id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_test_photos_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    INDEX idx_test_photos_athlete_test (athlete_test_id)
+    INDEX idx_test_photos_athlete_test (athlete_test_id),
+    INDEX idx_test_photos_station (athlete_test_id, test_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE bleep_tests (
@@ -152,7 +154,7 @@ CREATE TABLE audit_logs (
     username VARCHAR(50) NOT NULL,
     user_role VARCHAR(30) NOT NULL,
     action ENUM('create', 'update', 'delete') NOT NULL,
-    module ENUM('tes_fisik', 'bleep_test') NOT NULL,
+    module ENUM('tes_fisik', 'tes_fisik_pos', 'bleep_test') NOT NULL,
     record_id BIGINT UNSIGNED NULL,
     record_number VARCHAR(30) NULL,
     athlete_name VARCHAR(150) NOT NULL,
@@ -166,6 +168,14 @@ CREATE TABLE audit_logs (
     INDEX idx_audit_logs_module_action (module, action),
     INDEX idx_audit_logs_record (module, record_id),
     INDEX idx_audit_logs_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE test_settings (
+    setting_key VARCHAR(80) PRIMARY KEY,
+    setting_value VARCHAR(255) NOT NULL,
+    updated_by BIGINT UNSIGNED NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_test_settings_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE migrations (
@@ -193,6 +203,9 @@ INSERT INTO migrations (migration) VALUES
     ('008_allow_null_bleep_birth_date.sql'),
     ('009_create_audit_logs.sql'),
     ('010_recalculate_bleep_vo2max_table.sql'),
-    ('011_recalculate_bleep_categories.sql');
+    ('011_recalculate_bleep_categories.sql'),
+    ('012_add_test_code_to_photos.sql'),
+    ('013_add_station_audit_module.sql'),
+    ('014_create_test_settings.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -44,7 +44,7 @@ $groups = [
             <td><strong><?= e($group['component']) ?></strong></td>
             <td colspan="4"></td>
         </tr>
-        <?php foreach ($group['codes'] as $code): $definition = physical_test_items()[$code]; $result = $results[$code] ?? []; ?>
+        <?php foreach ($group['codes'] as $code): $definition = physical_test_input_definition($code, $test['gender']); $result = $results[$code] ?? []; ?>
         <tr class="measurement-detail-row">
             <td><?= e($definition['detail'] ?: $definition['method']) ?></td>
             <td><?= e($definition['method']) ?></td>
