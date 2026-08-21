@@ -42,13 +42,12 @@ document.querySelectorAll('[data-nav-accordion-trigger]').forEach((trigger) => {
     });
 });
 
-document.querySelectorAll('[data-station-toggle]').forEach((trigger) => {
-    trigger.addEventListener('click', () => {
-        if (window.innerWidth > 680) return;
-        const card = trigger.closest('[data-station-card]');
-        const isOpen = card?.classList.toggle('expanded') || false;
-        trigger.setAttribute('aria-expanded', String(isOpen));
-    });
+document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-station-toggle]');
+    if (!trigger || window.innerWidth > 680) return;
+    const card = trigger.closest('[data-station-card]');
+    const isOpen = card?.classList.toggle('expanded') || false;
+    trigger.setAttribute('aria-expanded', String(isOpen));
 });
 
 document.querySelectorAll('form[data-confirm]').forEach((form) => {
@@ -62,8 +61,56 @@ if (autoRefresh) {
     const interval = Number(autoRefresh.dataset.autoRefresh) || 30000;
     let refreshing = false;
 
+    function stationFormState(form) {
+        const values = [];
+        form.querySelectorAll('input, select, textarea').forEach((field) => {
+            if (!field.name || field.name === '_token') return;
+            if (field.type === 'file') {
+                values.push([field.name, Array.from(field.files || []).map((file) => `${file.name}:${file.size}:${file.lastModified}`)]);
+            } else if (field.type === 'checkbox' || field.type === 'radio') {
+                values.push([field.name, field.checked ? field.value : '']);
+            } else {
+                values.push([field.name, field.value]);
+            }
+        });
+        return JSON.stringify(values);
+    }
+
+    function initializeStationFormState(container) {
+        container.querySelectorAll('.station-score-form').forEach((form) => {
+            form.dataset.initialState = stationFormState(form);
+        });
+    }
+
+    function stationHasUnsavedInput() {
+        if (!autoRefresh.hasAttribute('data-preserve-station-forms')) return false;
+        if (document.activeElement?.closest?.('.station-score-form')) return true;
+        return Array.from(autoRefresh.querySelectorAll('.station-score-form')).some((form) =>
+            form.dataset.initialState !== stationFormState(form)
+        );
+    }
+
+    function captureStationViewState() {
+        if (!autoRefresh.hasAttribute('data-preserve-station-forms')) return [];
+        return Array.from(autoRefresh.querySelectorAll('[data-station-card].expanded')).map((card) =>
+            card.querySelector('input[name="athlete_test_id"]')?.value
+        ).filter(Boolean);
+    }
+
+    function restoreStationViewState(expandedIds) {
+        expandedIds.forEach((id) => {
+            const input = autoRefresh.querySelector(`input[name="athlete_test_id"][value="${CSS.escape(id)}"]`);
+            const card = input?.closest('[data-station-card]');
+            if (!card) return;
+            card.classList.add('expanded');
+            card.querySelector('[data-station-toggle]')?.setAttribute('aria-expanded', 'true');
+        });
+    }
+
+    initializeStationFormState(autoRefresh);
+
     async function refreshPageContent() {
-        if (refreshing || document.hidden) return;
+        if (refreshing || document.hidden || stationHasUnsavedInput()) return;
         refreshing = true;
         try {
             const response = await fetch(window.location.href, {
@@ -76,7 +123,13 @@ if (autoRefresh) {
             const documentCopy = new DOMParser().parseFromString(await response.text(), 'text/html');
             const updatedContent = documentCopy.querySelector('[data-auto-refresh]');
             if (updatedContent) {
+                const expandedIds = captureStationViewState();
+                const scrollPosition = window.scrollY;
                 autoRefresh.replaceChildren(...Array.from(updatedContent.childNodes).map((node) => node.cloneNode(true)));
+                initializeStationFormState(autoRefresh);
+                initializePhotoInputs(autoRefresh);
+                restoreStationViewState(expandedIds);
+                window.scrollTo({ top: scrollPosition, behavior: 'auto' });
             }
         } catch (error) {
             // Keep the current screen intact when the connection is unavailable.
@@ -360,8 +413,6 @@ if (selectedAthlete) {
     updateAthleteFields(selectedAthlete);
 }
 
-const photoInputs = Array.from(document.querySelectorAll('[data-photo-input]'));
-
 function compressPhoto(file) {
     return new Promise((resolve, reject) => {
         if (!file.type.startsWith('image/')) {
@@ -419,8 +470,11 @@ function renderPhotoPreviews(input) {
     });
 }
 
-photoInputs.forEach((input) => {
-    input.addEventListener('change', async () => {
+function initializePhotoInputs(container = document) {
+    container.querySelectorAll('[data-photo-input]').forEach((input) => {
+        if (input.dataset.photoInputReady === 'true') return;
+        input.dataset.photoInputReady = 'true';
+        input.addEventListener('change', async () => {
         const selectedFiles = Array.from(input.files || []);
         if (selectedFiles.length > 10) {
             input.value = '';
@@ -446,5 +500,8 @@ photoInputs.forEach((input) => {
         } finally {
             input.disabled = false;
         }
+        });
     });
-});
+}
+
+initializePhotoInputs();

@@ -1,4 +1,4 @@
-<div data-auto-refresh="30000">
+<div data-auto-refresh="30000" data-refresh-page="analysis">
 <div class="page-heading">
     <div><p class="eyebrow">INSIGHT HASIL PENGUKURAN</p><h1>Analisis Tes Fisik</h1><p>Evaluasi cakupan, kualitas data, dan kondisi fisik berdasarkan hasil yang telah diinput.</p></div>
     <a class="btn btn-light" href="<?= e(base_url('reports.php')) ?>">Buka Laporan</a>

@@ -1,3 +1,4 @@
+<div data-auto-refresh="30000" data-preserve-station-forms data-refresh-page="station">
 <div class="page-heading station-heading">
     <div><p class="eyebrow">POS INPUT TES</p><h1><?= e($item['method']) ?></h1><p><?= e($item['component']) ?><?= $item['detail'] !== '' ? ' · ' . e($item['detail']) : '' ?>. Petugas pos cukup pilih atlet yang menunggu, isi skor, lalu simpan.</p></div>
     <a class="btn btn-light station-register-button" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a>
@@ -66,3 +67,4 @@
         <?php endforeach; ?>
     </div>
 </section>
+</div>
