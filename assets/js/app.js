@@ -99,16 +99,15 @@ function updateBleepMetrics() {
     let validationMessage = '';
     if (!testDate) validationMessage = 'Tanggal tes wajib diisi.';
     else if (birth && testedAt < birth) validationMessage = 'Tanggal tes tidak boleh lebih awal dari tanggal lahir.';
-    else if (age !== null && (age < 6 || age > 100)) validationMessage = `Usia atlet saat tes adalah ${age} tahun. Periksa tanggal lahir pada Tes Fisik.`;
     if (validation) {
         validation.textContent = validationMessage;
         validation.hidden = validationMessage === '';
     }
     const selectedAthleteValue = bleepForm.querySelector('[data-bleep-athlete-value]')?.value;
     if (submitButton) submitButton.disabled = validationMessage !== '' || !selectedAthleteValue;
-    const calculationAge = age !== null && age >= 6 && age <= 100 ? age : 20;
-    const vo2max = 31.025 + (3.238 * speed) - (3.248 * calculationAge) + (0.1536 * speed * calculationAge);
-    bleepForm.querySelector('[data-vo2max]').textContent = validationMessage ? '-' : vo2max.toFixed(2);
+    const levelShuttleScore = level + (shuttle / ((level * 0.4325) + 7.0048));
+    const vo2max = (3.46 * levelShuttleScore) + 12.19;
+    bleepForm.querySelector('[data-vo2max]').textContent = validationMessage ? '-' : vo2max.toFixed(1);
     bleepForm.querySelector('[data-bleep-speed]').textContent = speed.toFixed(2);
     bleepForm.querySelector('[data-total-shuttles]').textContent = completedShuttles;
     bleepForm.querySelector('[data-bleep-distance]').textContent = completedShuttles * 20;

@@ -178,7 +178,16 @@ function bleep_test_protocol(): array
     return $protocol;
 }
 
-function bleep_test_metrics(int $level, int $shuttle, int $age): array
+function bleep_vo2max_from_level_shuttle(int $level, int $shuttle): float
+{
+    // Tabel VO2max Lari Multi Tahap/Bleep Test yang umum dipakai di Indonesia.
+    // Rumus ini mereplikasi tabel level-shuttle: contoh 4.2 = 26.8,
+    // 5.2 = 30.2, 15.2 = 64.6 ml/kg/menit.
+    $levelShuttleScore = $level + ($shuttle / (($level * 0.4325) + 7.0048));
+    return round((3.46 * $levelShuttleScore) + 12.19, 1);
+}
+
+function bleep_test_metrics(int $level, int $shuttle, ?int $age = null): array
 {
     $protocol = bleep_test_protocol();
     if (!isset($protocol[$level])) {
@@ -187,27 +196,23 @@ function bleep_test_metrics(int $level, int $shuttle, int $age): array
     if ($shuttle < 0 || $shuttle > $protocol[$level]['shuttles']) {
         throw new InvalidArgumentException("Shuttle level {$level} harus berada pada rentang 0 sampai {$protocol[$level]['shuttles']}.");
     }
-    if ($age < 6 || $age > 100) {
-        throw new InvalidArgumentException("Usia atlet saat tes adalah {$age} tahun. Bleep Test hanya dapat dihitung untuk usia 6 sampai 100 tahun. Periksa tanggal lahir pada Tes Fisik.");
-    }
 
     $previousShuttles = $level > 1 ? $protocol[$level - 1]['cumulative_shuttles'] : 0;
     $completedShuttles = $previousShuttles + $shuttle;
     $levelFraction = $protocol[$level]['shuttles'] > 0 ? $shuttle / $protocol[$level]['shuttles'] : 0;
     $speed = 8 + (0.5 * ($level + $levelFraction));
-    $vo2max = 31.025 + (3.238 * $speed) - (3.248 * $age) + (0.1536 * $speed * $age);
 
     return [
-        'vo2max' => round($vo2max, 2),
+        'vo2max' => bleep_vo2max_from_level_shuttle($level, $shuttle),
         'speed' => round($speed, 2),
         'completed_shuttles' => $completedShuttles,
         'distance' => $completedShuttles * 20,
     ];
 }
 
-function calculate_bleep_vo2max(int $level, int $age, int $shuttle = 0): float
+function calculate_bleep_vo2max(int $level, int $age = 20, int $shuttle = 0): float
 {
-    return bleep_test_metrics($level, $shuttle, $age)['vo2max'];
+    return bleep_test_metrics($level, $shuttle)['vo2max'];
 }
 
 function uploaded_files(string $field): array

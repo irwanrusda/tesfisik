@@ -13,7 +13,7 @@
 
 <section class="panel vo2max-analysis">
     <div class="panel-header"><div><p class="eyebrow">KAPASITAS AEROBIK</p><h2>Analisis VO2max Bleep Test</h2></div><span class="count-badge"><?= e((int) ($vo2maxSummary['samples'] ?? 0)) ?> sampel</span></div>
-    <div class="vo2max-summary"><div><span>Rata-Rata</span><strong><?= e($vo2maxSummary['average'] ?? '-') ?></strong><small>ml/kg/menit</small></div><div><span>Terendah</span><strong><?= e($vo2maxSummary['minimum'] ?? '-') ?></strong><small>ml/kg/menit</small></div><div><span>Tertinggi</span><strong><?= e($vo2maxSummary['maximum'] ?? '-') ?></strong><small>ml/kg/menit</small></div><p>VO2max dihitung otomatis dari level terakhir Bleep Test dan usia atlet saat tes menggunakan persamaan Leger.</p></div>
+    <div class="vo2max-summary"><div><span>Rata-Rata</span><strong><?= e($vo2maxSummary['average'] ?? '-') ?></strong><small>ml/kg/menit</small></div><div><span>Terendah</span><strong><?= e($vo2maxSummary['minimum'] ?? '-') ?></strong><small>ml/kg/menit</small></div><div><span>Tertinggi</span><strong><?= e($vo2maxSummary['maximum'] ?? '-') ?></strong><small>ml/kg/menit</small></div><p>VO2max dihitung otomatis dari level dan shuttle terakhir Bleep Test menggunakan tabel VO2max Lari Multi Tahap.</p></div>
 </section>
 
 <section class="summary-kpis bleep-analysis-kpis">
