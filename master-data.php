@@ -8,11 +8,19 @@ Auth::requireAnyRole(['superadmin', 'panitia', 'input']);
 if (request_method('POST')) {
     Auth::requireRole('superadmin');
     verify_csrf();
+    $action = (string) ($_POST['action'] ?? 'sync');
     try {
-        $summary = MasterDataSync::run();
-        flash('success', "Sinkronisasi selesai: {$summary['athletes']} atlet, {$summary['coaches']} pelatih, dan {$summary['sports']} cabor.");
+        if ($action === 'add_athlete') {
+            set_old($_POST);
+            $athlete = MasterDataSync::addAthlete($_POST);
+            clear_old();
+            flash('success', "Atlet {$athlete['name']} berhasil ditambahkan ke Google Sheet dan database.");
+        } else {
+            $summary = MasterDataSync::run();
+            flash('success', "Sinkronisasi selesai: {$summary['athletes']} atlet, {$summary['coaches']} pelatih, dan {$summary['sports']} cabor.");
+        }
     } catch (Throwable $exception) {
-        flash('error', 'Sinkronisasi gagal: ' . $exception->getMessage());
+        flash('error', ($action === 'add_athlete' ? 'Penambahan atlet gagal: ' : 'Sinkronisasi gagal: ') . $exception->getMessage());
     }
     redirect('master-data.php');
 }

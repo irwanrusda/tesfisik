@@ -75,3 +75,22 @@ Atur webhook pada GitHub melalui `Settings > Webhooks > Add webhook`:
 - Active: aktif
 
 Log deployment disimpan di `storage/logs/deploy.log` dan dilindungi oleh `storage/.htaccess`. Jika respons menyatakan `proc_open` dinonaktifkan, hosting tidak mengizinkan metode webhook ini dan deployment harus menggunakan SSH, cron, atau fitur Git cPanel.
+
+## Penulisan Atlet ke Google Sheet
+
+Fitur Tambah Atlet menggunakan Google Sheets API dengan service account. Izin publik "semua orang dapat mengedit" tidak diperlukan dan sebaiknya diubah menjadi Viewer setelah integrasi aktif.
+
+1. Aktifkan Google Sheets API pada project Google Cloud.
+2. Cabut JSON key yang pernah terekspos dan buat key baru.
+3. Bagikan spreadsheet sebagai Editor hanya ke email service account.
+4. Simpan JSON key baru di luar `public_html`, misalnya `/home/username/.secrets/google-service-account.json`.
+5. Atur permission file menjadi `600`.
+
+Tambahkan konfigurasi berikut ke `.env` produksi:
+
+```env
+GOOGLE_SHEET_NAME="Atlit dan Pelatih"
+GOOGLE_SERVICE_ACCOUNT_JSON=/home/username/.secrets/google-service-account.json
+```
+
+Pastikan ekstensi PHP OpenSSL aktif. Hanya superadmin aplikasi yang dapat membuka dan mengirim formulir Tambah Atlet.

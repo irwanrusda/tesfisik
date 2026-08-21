@@ -1,9 +1,24 @@
 <div class="page-heading">
     <div><p class="eyebrow">SUMBER GOOGLE SHEET</p><h1>Master Atlet & Pelatih</h1><p>Daftar resmi nama, cabor, prestasi, dan status pembinaan.</p></div>
     <?php if ((Auth::user()['role'] ?? '') === 'superadmin'): ?>
-        <form method="post" data-confirm="Ambil ulang seluruh data dari Google Sheet?"><?= csrf_field() ?><button class="btn btn-primary" type="submit">Sinkronkan Google Sheet</button></form>
+        <div class="button-row"><a class="btn btn-primary" href="#tambah-atlet"><i class="fa-solid fa-user-plus"></i> Tambah Atlet</a><form method="post" data-confirm="Ambil ulang seluruh data dari Google Sheet?"><?= csrf_field() ?><input type="hidden" name="action" value="sync"><button class="btn btn-light" type="submit">Sinkronkan Google Sheet</button></form></div>
     <?php endif; ?>
 </div>
+<?php if ((Auth::user()['role'] ?? '') === 'superadmin'): ?>
+<section class="panel add-athlete-panel" id="tambah-atlet">
+    <div class="panel-header"><div><p class="eyebrow">SUPERADMIN</p><h2>Tambah Atlet ke Master Data</h2><p>Data akan ditulis ke sheet Atlit dan Pelatih, kemudian langsung tersedia di aplikasi.</p></div><span class="count-badge"><i class="fa-brands fa-google-drive"></i> Google Sheet</span></div>
+    <form method="post" class="add-athlete-form">
+        <?= csrf_field() ?><input type="hidden" name="action" value="add_athlete">
+        <label class="field field-span-2"><span>Nama Atlet *</span><input name="name" value="<?= e(old('name')) ?>" required></label>
+        <label class="field"><span>Jenis Kelamin *</span><select name="gender" required><option value="">Pilih</option><option value="L" <?= old('gender') === 'L' ? 'selected' : '' ?>>Laki-Laki</option><option value="P" <?= old('gender') === 'P' ? 'selected' : '' ?>>Perempuan</option></select></label>
+        <label class="field"><span>Cabang Olahraga *</span><input name="sport" value="<?= e(old('sport')) ?>" list="sports-list" required><datalist id="sports-list"><?php foreach ($sports as $item): ?><option value="<?= e($item) ?>"><?php endforeach; ?></datalist></label>
+        <label class="field"><span>Prestasi</span><input name="achievement" value="<?= e(old('achievement')) ?>" placeholder="Contoh: PON Beladiri 2025"></label>
+        <label class="field"><span>Status Pembinaan</span><select name="development_status"><option value="">Belum ditentukan</option><?php foreach (['Andalan', 'Prioritas', 'Potensial'] as $item): ?><option value="<?= e($item) ?>" <?= old('development_status') === $item ? 'selected' : '' ?>><?= e($item) ?></option><?php endforeach; ?></select></label>
+        <label class="field field-span-2"><span>Keterangan</span><textarea name="description" rows="3"><?= e(old('description')) ?></textarea></label>
+        <div class="form-actions field-span-2"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Spreadsheet</button></div>
+    </form>
+</section>
+<?php endif; ?>
 <section class="stats-grid master-stats">
     <article class="stat-card accent-red"><span>Total Data Aktif</span><strong><?= e((int) ($counts['total'] ?? 0)) ?></strong><small>Atlet dan pelatih</small></article>
     <article class="stat-card accent-blue"><span>Atlet</span><strong><?= e((int) ($counts['athletes'] ?? 0)) ?></strong><small>Siap dipilih saat input tes</small></article>

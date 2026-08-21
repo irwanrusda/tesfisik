@@ -2,6 +2,8 @@
 .user.ini
 php.ini
 error_log
+google-service-account*.json
+*-service-account.json
 storage/logs/*.log
 storage/uploads/*
 storage/deploy-webhook.lock
