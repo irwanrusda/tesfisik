@@ -1,5 +1,6 @@
 <?php
 $isEdit = $test !== null;
+$showMeasurements = $showMeasurements ?? false;
 $value = static fn(string $key, mixed $default = '') => old($key, $isEdit ? ($test[$key] ?? $default) : $default);
 $resultValue = static function (string $code, string $key) use ($results, $isEdit) {
     $oldResults = old('results', []);
@@ -11,7 +12,7 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
 };
 ?>
 <div class="page-heading">
-    <div><p class="eyebrow"><?= $isEdit ? 'PERBARUI PENGUKURAN' : 'PENGUKURAN BARU' ?></p><h1><?= $isEdit ? 'Edit Data Tes' : 'Input Data Tes Fisik' ?></h1><p>Isi identitas atlet dan hasil setiap item pengukuran.</p></div>
+    <div><p class="eyebrow"><?= $isEdit ? 'PERBARUI DATA ATLET' : 'PENGUKURAN BARU' ?></p><h1><?= $isEdit ? 'Edit Data Tes' : 'Daftarkan Atlet Tes' ?></h1><p>Isi biodata atlet untuk membuat nomor tes. Hasil tiap item diisi oleh petugas pada submenu pos masing-masing.</p></div>
     <?php if ($isEdit): ?><a class="btn btn-light" href="<?= e(base_url('test-view.php?id=' . $test['id'])) ?>">Kembali ke Detail</a><?php endif; ?>
 </div>
 <form method="post" action="<?= e(base_url($formAction)) ?>" class="test-form" enctype="multipart/form-data">
@@ -36,21 +37,27 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
             <label class="field field-span-2"><span>Catatan Umum</span><textarea name="notes" rows="3"><?= e($value('notes')) ?></textarea></label>
         </div>
     </section>
-    <section class="panel form-section">
-        <div class="section-number">02</div><div class="section-title"><p class="eyebrow">HASIL TES</p><h2>Kondisi Fisik</h2></div>
-        <div class="measurement-list">
-            <?php foreach (physical_test_items() as $code => $item): ?>
-                <div class="measurement-row">
-                    <div class="measurement-name"><span><?= e($item['component']) ?></span><strong><?= e($item['method']) ?></strong><small><?= e($item['detail']) ?></small></div>
-                    <label class="field compact"><span>Skor (<?= e($item['unit']) ?>)</span><input type="number" step="0.01" min="0" name="results[<?= e($code) ?>][value]" value="<?= e($resultValue($code, 'result_value') ?: $resultValue($code, 'value')) ?>"></label>
-                    <label class="field compact"><span>Kategori</span><select name="results[<?= e($code) ?>][category]"><option value="">Pilih kategori</option><?php foreach (['Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Sangat Kurang'] as $category): ?><option value="<?= e($category) ?>" <?= $resultValue($code, 'category') === $category ? 'selected' : '' ?>><?= e($category) ?></option><?php endforeach; ?></select></label>
-                    <label class="field compact"><span>Ket/Paraf</span><input name="results[<?= e($code) ?>][notes]" value="<?= e($resultValue($code, 'examiner_notes') ?: $resultValue($code, 'notes')) ?>"></label>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </section>
+    <?php if ($showMeasurements): ?>
+        <section class="panel form-section">
+            <div class="section-number">02</div><div class="section-title"><p class="eyebrow">HASIL TES</p><h2>Kondisi Fisik</h2></div>
+            <div class="measurement-list">
+                <?php foreach (physical_test_items() as $code => $item): ?>
+                    <div class="measurement-row">
+                        <div class="measurement-name"><span><?= e($item['component']) ?></span><strong><?= e($item['method']) ?></strong><small><?= e($item['detail']) ?></small></div>
+                        <label class="field compact"><span>Skor (<?= e($item['unit']) ?>)</span><input type="number" step="0.01" min="0" name="results[<?= e($code) ?>][value]" value="<?= e($resultValue($code, 'result_value') ?: $resultValue($code, 'value')) ?>"></label>
+                        <label class="field compact"><span>Kategori</span><select name="results[<?= e($code) ?>][category]"><option value="">Pilih kategori</option><?php foreach (['Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Sangat Kurang'] as $category): ?><option value="<?= e($category) ?>" <?= $resultValue($code, 'category') === $category ? 'selected' : '' ?>><?= e($category) ?></option><?php endforeach; ?></select></label>
+                        <label class="field compact"><span>Ket/Paraf</span><input name="results[<?= e($code) ?>][notes]" value="<?= e($resultValue($code, 'examiner_notes') ?: $resultValue($code, 'notes')) ?>"></label>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
+    <?php else: ?>
+        <section class="panel form-section station-info-panel">
+            <div class="section-number">02</div><div class="section-title"><p class="eyebrow">POS TES</p><h2>Input Hasil Dipisah per Sub Menu</h2><p>Setelah data atlet disimpan, petugas tiap pos dapat membuka menu Sit Up, Push Up, Pull Up, Medicine Ball, Vertical Jump, Sprint 30m, Illinois, Sit and Reach, atau Bleep Test untuk mengisi skor sesuai atlet yang sedang menunggu.</p></div>
+        </section>
+    <?php endif; ?>
     <section class="panel form-section documentation-form-section">
-        <div class="section-number">03</div><div class="section-title documentation-title"><div><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2><p>Ambil foto langsung atau pilih beberapa dokumentasi dari galeri perangkat.</p></div><span class="documentation-title-icon"><i class="fa-solid fa-camera-retro"></i></span></div>
+        <div class="section-number"><?= $showMeasurements ? '03' : '03' ?></div><div class="section-title documentation-title"><div><p class="eyebrow">DOKUMENTASI</p><h2>Foto Kegiatan Tes</h2><p>Ambil foto langsung atau pilih beberapa dokumentasi dari galeri perangkat.</p></div><span class="documentation-title-icon"><i class="fa-solid fa-camera-retro"></i></span></div>
         <label class="photo-upload photo-upload-standard">
             <input type="file" name="documentation_photos[]" accept="image/*" multiple data-photo-input>
             <span class="photo-upload-icon"><i class="fa-solid fa-paperclip"></i></span>
@@ -73,5 +80,5 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
             </div>
         <?php endif; ?>
     </section>
-    <div class="form-actions"><a class="btn btn-light" href="<?= e(base_url('reports.php')) ?>">Batal</a><button class="btn btn-primary" type="submit"><?= $isEdit ? 'Simpan Perubahan' : 'Simpan Data Tes' ?></button></div>
+    <div class="form-actions"><a class="btn btn-light" href="<?= e(base_url('reports.php')) ?>">Batal</a><button class="btn btn-primary" type="submit"><?= $isEdit ? 'Simpan Perubahan' : 'Simpan Biodata Tes' ?></button></div>
 </form>

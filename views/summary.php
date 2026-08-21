@@ -6,7 +6,7 @@ $participation = $total > 0 ? round($tested / $total * 100, 1) : 0;
 <div data-auto-refresh="30000">
 <div class="page-heading">
     <div><p class="eyebrow">RINGKASAN MASTER DATA</p><h1>Summary Atlet</h1><p>Komposisi atlet aktif dan progres keikutsertaan tes fisik.</p></div>
-    <?php if ((Auth::user()['role'] ?? '') === 'superadmin'): ?><a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Input Tes Baru</a><?php endif; ?>
+    <?php if ((Auth::user()['role'] ?? '') === 'superadmin'): ?><a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a><?php endif; ?>
 </div>
 
 <section class="summary-kpis">

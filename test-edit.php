@@ -44,9 +44,11 @@ if (request_method('POST')) {
             $masterPersonId, $masterPerson['name'], trim($_POST['birth_place']), $_POST['birth_date'], $masterPerson['sport'], $masterPerson['gender'], $height, $weight, $bmi,
             $_POST['test_date'], trim($_POST['test_place'] ?? '') ?: 'Padang', trim($_POST['notes'] ?? '') ?: null, $id,
         ]);
-        $upsert = $pdo->prepare('INSERT INTO test_results (athlete_test_id, test_code, result_value, unit, category, examiner_notes) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE result_value = VALUES(result_value), unit = VALUES(unit), category = VALUES(category), examiner_notes = VALUES(examiner_notes)');
-        foreach (physical_test_items() as $code => $item) {
-            $upsert->execute([$id, $code, nullable_number($_POST['results'][$code]['value'] ?? null), $item['unit'], trim((string) ($_POST['results'][$code]['category'] ?? '')) ?: null, trim((string) ($_POST['results'][$code]['notes'] ?? '')) ?: null]);
+        if (isset($_POST['results']) && is_array($_POST['results'])) {
+            $upsert = $pdo->prepare('INSERT INTO test_results (athlete_test_id, test_code, result_value, unit, category, examiner_notes) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE result_value = VALUES(result_value), unit = VALUES(unit), category = VALUES(category), examiner_notes = VALUES(examiner_notes)');
+            foreach (physical_test_items() as $code => $item) {
+                $upsert->execute([$id, $code, nullable_number($_POST['results'][$code]['value'] ?? null), $item['unit'], trim((string) ($_POST['results'][$code]['category'] ?? '')) ?: null, trim((string) ($_POST['results'][$code]['notes'] ?? '')) ?: null]);
+            }
         }
         $storedPhotos = store_test_photos($pdo, $id, $photoFiles, (int) Auth::user()['id']);
         $deleteIds = array_values(array_filter(array_map('intval', $_POST['delete_photos'] ?? [])));
@@ -86,4 +88,4 @@ $athletes = $pdo->query("SELECT master_people.id, master_people.name, master_peo
 $photoStatement = $pdo->prepare('SELECT id, original_name, file_size FROM test_photos WHERE athlete_test_id = ? ORDER BY created_at, id');
 $photoStatement->execute([$id]);
 $photos = $photoStatement->fetchAll();
-view('test-form', ['pageTitle' => 'Edit Data Tes', 'test' => $test, 'results' => $results, 'formAction' => 'test-edit.php?id=' . $id, 'athletes' => $athletes, 'photos' => $photos]);
+view('test-form', ['pageTitle' => 'Edit Data Tes', 'test' => $test, 'results' => $results, 'formAction' => 'test-edit.php?id=' . $id, 'athletes' => $athletes, 'photos' => $photos, 'showMeasurements' => false]);

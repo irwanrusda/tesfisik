@@ -40,17 +40,22 @@ $role = $user['role'] ?? '';
                 </a>
             <?php endif; ?>
             <?php if (in_array($role, ['superadmin', 'input'], true)): ?>
-                <?php $inputMenuOpen = in_array($currentPage, ['test-create.php', 'test-edit.php', 'bleep-test.php'], true); ?>
+                <?php $inputMenuOpen = in_array($currentPage, ['test-create.php', 'test-edit.php', 'test-station.php', 'bleep-test.php'], true); ?>
                 <div class="nav-accordion <?= $inputMenuOpen ? 'open' : '' ?>" data-nav-accordion>
                     <button class="nav-item nav-accordion-trigger <?= $inputMenuOpen ? 'active' : '' ?>" type="button" data-nav-accordion-trigger aria-expanded="<?= $inputMenuOpen ? 'true' : 'false' ?>">
                         <span class="nav-icon"><i class="fa-solid fa-file-circle-plus"></i></span>
-                        <span>Input Data</span>
+                        <span>Input Pos Tes</span>
                         <i class="fa-solid fa-chevron-down nav-chevron"></i>
                     </button>
                     <div class="nav-submenu">
                         <a class="nav-subitem <?= in_array($currentPage, ['test-create.php', 'test-edit.php'], true) ? 'active' : '' ?>" href="<?= e(base_url('test-create.php')) ?>">
-                            <i class="fa-solid fa-person-running"></i><span><strong>Tes Fisik</strong><small>Kekuatan, power, dan lainnya</small></span>
+                            <i class="fa-solid fa-id-card"></i><span><strong>Daftar Atlet Tes</strong><small>Buat biodata dan nomor tes</small></span>
                         </a>
+                        <?php foreach (physical_test_items() as $navCode => $navItem): ?>
+                            <a class="nav-subitem <?= $currentPage === 'test-station.php' && ($_GET['code'] ?? '') === $navCode ? 'active' : '' ?>" href="<?= e(base_url('test-station.php?code=' . urlencode($navCode))) ?>">
+                                <i class="fa-solid fa-clipboard-check"></i><span><strong><?= e($navItem['method']) ?></strong><small><?= e($navItem['component']) ?></small></span>
+                            </a>
+                        <?php endforeach; ?>
                         <a class="nav-subitem <?= $currentPage === 'bleep-test.php' ? 'active' : '' ?>" href="<?= e(base_url('bleep-test.php')) ?>">
                             <i class="fa-solid fa-heart-pulse"></i><span><strong>Bleep Test VO2max</strong><small>Daya tahan aerobik 20 meter</small></span>
                         </a>
