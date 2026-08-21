@@ -2,17 +2,21 @@
     <div><p class="eyebrow">POS INPUT TES</p><h1><?= e($item['method']) ?></h1><p><?= e($item['component']) ?><?= $item['detail'] !== '' ? ' · ' . e($item['detail']) : '' ?>. Petugas pos cukup pilih atlet yang menunggu, isi skor, lalu simpan.</p></div>
     <a class="btn btn-light" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a>
 </div>
-<section class="station-tabs panel">
+<section class="station-current panel">
+    <div><span class="station-current-label">Pos aktif</span><strong><?= e($item['method']) ?></strong><small><?= e($item['component']) ?><?= $item['detail'] !== '' ? ' · ' . e($item['detail']) : '' ?> · satuan <?= e($item['unit']) ?></small></div>
+    <span class="station-current-date"><?= e(format_date($date)) ?></span>
+</section>
+<section class="station-tabs panel" aria-label="Pilih pos tes">
     <?php foreach ($items as $itemCode => $definition): ?>
-        <a class="station-tab <?= $itemCode === $code ? 'active' : '' ?>" href="<?= e(base_url('test-station.php?code=' . urlencode($itemCode) . '&date=' . urlencode($date))) ?>">
-            <strong><?= e($definition['method']) ?></strong><small><?= e($definition['unit']) ?></small>
+        <a class="station-tab <?= $itemCode === $code ? 'active' : '' ?>" href="<?= e(base_url('test-station.php?code=' . urlencode($itemCode) . '&date=' . urlencode($date) . '&status=' . urlencode($status))) ?>">
+            <strong><?= e($definition['method']) ?></strong><small><?= e($definition['component']) ?> · <?= e($definition['unit']) ?></small>
         </a>
     <?php endforeach; ?>
 </section>
 <section class="summary-kpis station-kpis">
-    <div class="metric-card metric-primary"><span>Total Atlet</span><strong><?= e((int) ($counts['total'] ?? 0)) ?></strong><small>Tanggal <?= e(format_date($date)) ?></small></div>
-    <div class="metric-card metric-warning"><span>Menunggu</span><strong><?= e((int) ($counts['waiting'] ?? 0)) ?></strong><small>Belum diisi pos ini</small></div>
-    <div class="metric-card metric-success"><span>Selesai</span><strong><?= e((int) ($counts['done'] ?? 0)) ?></strong><small>Sudah punya skor</small></div>
+    <div class="metric-card metric-primary"><span>Total</span><strong><?= e((int) ($counts['total'] ?? 0)) ?></strong><small>Atlet hari ini</small></div>
+    <div class="metric-card metric-warning"><span>Menunggu</span><strong><?= e((int) ($counts['waiting'] ?? 0)) ?></strong><small>Belum isi</small></div>
+    <div class="metric-card metric-success"><span>Selesai</span><strong><?= e((int) ($counts['done'] ?? 0)) ?></strong><small>Sudah isi</small></div>
 </section>
 <section class="panel filter-panel">
     <form class="filter-grid station-filter" method="get">
@@ -31,7 +35,8 @@
             <article class="station-card <?= $row['result_value'] === null ? 'waiting' : 'done' ?>">
                 <div class="station-athlete">
                     <span class="person-monogram"><?= e(strtoupper(substr($row['athlete_name'], 0, 1))) ?></span>
-                    <div><strong><?= e($row['athlete_name']) ?></strong><small><?= e($row['sport']) ?> · <?= e($row['gender'] === 'L' ? 'Laki-laki' : 'Perempuan') ?> · <?= e($row['test_number']) ?></small></div>
+                    <div class="station-athlete-copy"><strong><?= e($row['athlete_name']) ?></strong><div class="station-athlete-meta"><span><?= e($row['sport']) ?></span><span><?= e($row['gender'] === 'L' ? 'Laki-laki' : 'Perempuan') ?></span><span><?= e($row['test_number']) ?></span></div></div>
+                    <span class="station-status-pill <?= $row['result_value'] === null ? 'waiting' : 'done' ?>"><?= $row['result_value'] === null ? 'Menunggu' : 'Selesai' ?></span>
                 </div>
                 <form class="station-score-form" method="post">
                     <?= csrf_field() ?>
