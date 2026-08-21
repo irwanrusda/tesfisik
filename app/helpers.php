@@ -236,6 +236,9 @@ function uploaded_files(string $field): array
 
 function store_test_photos(PDO $pdo, int $testId, array $files, int $userId): array
 {
+    if (!$files) {
+        return [];
+    }
     if (count($files) > 10) {
         throw new RuntimeException('Maksimal 10 foto dapat diunggah sekaligus.');
     }
@@ -246,7 +249,6 @@ function store_test_photos(PDO $pdo, int $testId, array $files, int $userId): ar
     }
 
     $allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
     $statement = $pdo->prepare('INSERT INTO test_photos (athlete_test_id, file_name, original_name, mime_type, file_size, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)');
     $storedPaths = [];
 
@@ -259,7 +261,8 @@ function store_test_photos(PDO $pdo, int $testId, array $files, int $userId): ar
                 throw new RuntimeException('Ukuran setiap foto maksimal 5 MB.');
             }
 
-            $mimeType = $finfo->file($file['tmp_name']);
+            $imageInfo = @getimagesize($file['tmp_name']);
+            $mimeType = is_array($imageInfo) ? (string) ($imageInfo['mime'] ?? '') : '';
             if (!isset($allowedTypes[$mimeType])) {
                 throw new RuntimeException('Format foto harus JPG, PNG, atau WebP.');
             }
@@ -297,4 +300,32 @@ function signed_photo_url(int $photoId, int $validForSeconds = 900): string
     }
     $signature = hash_hmac('sha256', $photoId . '|' . $expires, $secret);
     return base_url("test-photo.php?id={$photoId}&expires={$expires}&signature={$signature}");
+}
+
+function write_audit_log(PDO $pdo, string $action, string $module, array $record, array $details = []): void
+{
+    $user = Auth::user();
+    if (!$user) {
+        throw new RuntimeException('User audit tidak tersedia.');
+    }
+
+    $statement = $pdo->prepare(
+        'INSERT INTO audit_logs (user_id, user_name, username, user_role, action, module, record_id, record_number, athlete_name, sport, details, ip_address, user_agent)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+    $statement->execute([
+        $user['id'],
+        $user['name'],
+        $user['username'],
+        $user['role'],
+        $action,
+        $module,
+        $record['id'] ?? null,
+        $record['number'] ?? null,
+        $record['athlete_name'],
+        $record['sport'] ?? null,
+        $details ? json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+        substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45) ?: null,
+        substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255) ?: null,
+    ]);
 }

@@ -21,16 +21,19 @@ if (request_method('POST')) {
     $testDate = (string) ($_POST['test_date'] ?? '');
     $testPlace = trim((string) ($_POST['test_place'] ?? 'Padang'));
 
-    if ($masterPersonId < 1 || $birthPlace === '' || $birthDate === '' || !$height || !$weight || $testDate === '') {
-        flash('error', 'Lengkapi seluruh data wajib atlet.');
-        redirect('test-create.php');
-    }
+    if ($masterPersonId < 1) { flash('error', 'Pilih atlet dari master data.'); redirect('test-create.php'); }
+    if ($birthPlace === '') { flash('error', 'Tempat lahir wajib diisi.'); redirect('test-create.php'); }
+    if ($birthDate === '') { flash('error', 'Tanggal lahir wajib diisi.'); redirect('test-create.php'); }
+    if (!$height || $height <= 0) { flash('error', 'Tinggi badan harus lebih dari 0 cm.'); redirect('test-create.php'); }
+    if (!$weight || $weight <= 0) { flash('error', 'Berat badan harus lebih dari 0 kg.'); redirect('test-create.php'); }
+    if ($testDate === '') { flash('error', 'Tanggal tes wajib diisi.'); redirect('test-create.php'); }
+    try { calculate_age($birthDate, $testDate); } catch (Throwable $exception) { flash('error', $exception->getMessage()); redirect('test-create.php'); }
 
     $bmi = round($weight / (($height / 100) ** 2), 2);
     $pdo = Database::connection();
     $pdo->beginTransaction();
     try {
-        $testNumber = 'TF-' . date('Ymd', strtotime($testDate)) . '-' . strtoupper(bin2hex(random_bytes(2)));
+        $testNumber = 'TF-' . date('Ymd', strtotime($testDate)) . '-' . strtoupper(bin2hex(random_bytes(4)));
         $masterStatement = $pdo->prepare("SELECT master_people.id, master_people.name, master_people.gender, sports.name AS sport FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE master_people.id = ? AND master_people.person_type = 'Atlet' AND master_people.is_active = 1");
         $masterStatement->execute([$masterPersonId]);
         $masterPerson = $masterStatement->fetch();
@@ -59,6 +62,7 @@ if (request_method('POST')) {
             ]);
         }
         $storedPhotos = store_test_photos($pdo, $testId, $photoFiles, (int) Auth::user()['id']);
+        write_audit_log($pdo, 'create', 'tes_fisik', ['id' => $testId, 'number' => $testNumber, 'athlete_name' => $athleteName, 'sport' => $sport], ['tanggal_tes' => $testDate]);
         $pdo->commit();
         clear_old();
         flash('success', "Data tes {$athleteName} berhasil disimpan.");

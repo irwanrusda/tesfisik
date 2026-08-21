@@ -9,6 +9,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS test_results;
 DROP TABLE IF EXISTS test_photos;
 DROP TABLE IF EXISTS bleep_tests;
+DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS athlete_tests;
 DROP TABLE IF EXISTS master_people;
 DROP TABLE IF EXISTS sports;
@@ -144,6 +145,29 @@ CREATE TABLE bleep_tests (
     INDEX idx_bleep_tests_sport (sport)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE audit_logs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    user_name VARCHAR(100) NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    user_role VARCHAR(30) NOT NULL,
+    action ENUM('create', 'update', 'delete') NOT NULL,
+    module ENUM('tes_fisik', 'bleep_test') NOT NULL,
+    record_id BIGINT UNSIGNED NULL,
+    record_number VARCHAR(30) NULL,
+    athlete_name VARCHAR(150) NOT NULL,
+    sport VARCHAR(100) NULL,
+    details JSON NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_audit_logs_user FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+    INDEX idx_audit_logs_user (user_id),
+    INDEX idx_audit_logs_module_action (module, action),
+    INDEX idx_audit_logs_record (module, record_id),
+    INDEX idx_audit_logs_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE migrations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     migration VARCHAR(255) NOT NULL UNIQUE,
@@ -166,6 +190,7 @@ INSERT INTO migrations (migration) VALUES
     ('005_add_input_panitia_roles.sql'),
     ('006_create_test_photos.sql'),
     ('007_create_bleep_tests.sql'),
-    ('008_allow_null_bleep_birth_date.sql');
+    ('008_allow_null_bleep_birth_date.sql'),
+    ('009_create_audit_logs.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;

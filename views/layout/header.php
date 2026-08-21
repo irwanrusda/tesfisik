@@ -68,6 +68,9 @@ $role = $user['role'] ?? '';
                 <a class="nav-item <?= $currentPage === 'users.php' ? 'active' : '' ?>" href="<?= e(base_url('users.php')) ?>">
                     <span class="nav-icon"><i class="fa-solid fa-user-gear"></i></span> Manajemen User
                 </a>
+                <a class="nav-item <?= $currentPage === 'audit-logs.php' ? 'active' : '' ?>" href="<?= e(base_url('audit-logs.php')) ?>">
+                    <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> Audit Log
+                </a>
             <?php endif; ?>
         </nav>
         <div class="sidebar-user">

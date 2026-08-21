@@ -22,17 +22,13 @@ if (request_method('POST')) {
     $masterPersonId = (int) ($_POST['master_person_id'] ?? 0);
     $height = nullable_number($_POST['height_cm'] ?? null);
     $weight = nullable_number($_POST['weight_kg'] ?? null);
-    $required = ['birth_place', 'birth_date', 'test_date'];
-    foreach ($required as $field) {
-        if (trim((string) ($_POST[$field] ?? '')) === '') {
-            flash('error', 'Lengkapi seluruh data wajib atlet.');
-            redirect('test-edit.php?id=' . $id);
-        }
-    }
-    if ($masterPersonId < 1 || !$height || !$weight) {
-        flash('error', 'Atlet, tinggi, atau berat badan tidak valid.');
-        redirect('test-edit.php?id=' . $id);
-    }
+    if ($masterPersonId < 1) { flash('error', 'Pilih atlet dari master data.'); redirect('test-edit.php?id=' . $id); }
+    if (trim((string) ($_POST['birth_place'] ?? '')) === '') { flash('error', 'Tempat lahir wajib diisi.'); redirect('test-edit.php?id=' . $id); }
+    if (trim((string) ($_POST['birth_date'] ?? '')) === '') { flash('error', 'Tanggal lahir wajib diisi.'); redirect('test-edit.php?id=' . $id); }
+    if (!$height || $height <= 0) { flash('error', 'Tinggi badan harus lebih dari 0 cm.'); redirect('test-edit.php?id=' . $id); }
+    if (!$weight || $weight <= 0) { flash('error', 'Berat badan harus lebih dari 0 kg.'); redirect('test-edit.php?id=' . $id); }
+    if (trim((string) ($_POST['test_date'] ?? '')) === '') { flash('error', 'Tanggal tes wajib diisi.'); redirect('test-edit.php?id=' . $id); }
+    try { calculate_age($_POST['birth_date'], $_POST['test_date']); } catch (Throwable $exception) { flash('error', $exception->getMessage()); redirect('test-edit.php?id=' . $id); }
 
     $pdo->beginTransaction();
     try {
@@ -63,6 +59,7 @@ if (request_method('POST')) {
             $deleteStatement = $pdo->prepare("DELETE FROM test_photos WHERE athlete_test_id = ? AND id IN ({$placeholders})");
             $deleteStatement->execute(array_merge([$id], $deleteIds));
         }
+        write_audit_log($pdo, 'update', 'tes_fisik', ['id' => $id, 'number' => $test['test_number'], 'athlete_name' => $masterPerson['name'], 'sport' => $masterPerson['sport']], ['tanggal_tes' => $_POST['test_date']]);
         $pdo->commit();
         foreach ($deletedFiles as $photo) {
             $path = test_photo_path($photo['file_name']);

@@ -22,6 +22,11 @@ if (request_method('POST')) {
         Auth::requireRole('superadmin');
         $deleteId = (int) ($_POST['id'] ?? 0);
         try {
+            $recordStatement = $pdo->prepare('SELECT test_number, athlete_name, sport, test_date, level, shuttle, vo2max FROM bleep_tests WHERE id = ?');
+            $recordStatement->execute([$deleteId]);
+            $record = $recordStatement->fetch();
+            if (!$record) throw new RuntimeException('Data Bleep Test tidak ditemukan.');
+            write_audit_log($pdo, 'delete', 'bleep_test', ['id' => $deleteId, 'number' => $record['test_number'], 'athlete_name' => $record['athlete_name'], 'sport' => $record['sport']], ['tanggal_tes' => $record['test_date'], 'level' => $record['level'], 'shuttle' => $record['shuttle'], 'vo2max' => $record['vo2max']]);
             $deleteStatement = $pdo->prepare('DELETE FROM bleep_tests WHERE id = ?');
             $deleteStatement->execute([$deleteId]);
             if ($deleteStatement->rowCount() < 1) {
@@ -62,11 +67,16 @@ if (request_method('POST')) {
         if ($id > 0) {
             $statement = $pdo->prepare('UPDATE bleep_tests SET master_person_id = ?, athlete_name = ?, sport = ?, gender = ?, birth_date = ?, test_date = ?, test_place = ?, level = ?, shuttle = ?, completed_shuttles = ?, distance_m = ?, speed_kmh = ?, vo2max = ?, category = ?, notes = ? WHERE id = ?');
             $statement->execute([$athlete['id'], $athlete['name'], $athlete['sport'], $athlete['gender'], $birthDate, $testDate, $testPlace, $level, $shuttle, $metrics['completed_shuttles'], $metrics['distance'], $metrics['speed'], $metrics['vo2max'], $category, $notes, $id]);
+            $numberStatement = $pdo->prepare('SELECT test_number FROM bleep_tests WHERE id = ?');
+            $numberStatement->execute([$id]);
+            write_audit_log($pdo, 'update', 'bleep_test', ['id' => $id, 'number' => $numberStatement->fetchColumn(), 'athlete_name' => $athlete['name'], 'sport' => $athlete['sport']], ['tanggal_tes' => $testDate, 'level' => $level, 'shuttle' => $shuttle, 'vo2max' => $metrics['vo2max']]);
             flash('success', 'Hasil Bleep Test berhasil diperbarui.');
         } else {
-            $testNumber = 'BT-' . date('Ymd', strtotime($testDate)) . '-' . strtoupper(bin2hex(random_bytes(2)));
+            $testNumber = 'BT-' . date('Ymd', strtotime($testDate)) . '-' . strtoupper(bin2hex(random_bytes(4)));
             $statement = $pdo->prepare('INSERT INTO bleep_tests (test_number, master_person_id, athlete_name, sport, gender, birth_date, test_date, test_place, level, shuttle, completed_shuttles, distance_m, speed_kmh, vo2max, category, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
             $statement->execute([$testNumber, $athlete['id'], $athlete['name'], $athlete['sport'], $athlete['gender'], $birthDate, $testDate, $testPlace, $level, $shuttle, $metrics['completed_shuttles'], $metrics['distance'], $metrics['speed'], $metrics['vo2max'], $category, $notes, Auth::user()['id']]);
+            $bleepId = (int) $pdo->lastInsertId();
+            write_audit_log($pdo, 'create', 'bleep_test', ['id' => $bleepId, 'number' => $testNumber, 'athlete_name' => $athlete['name'], 'sport' => $athlete['sport']], ['tanggal_tes' => $testDate, 'level' => $level, 'shuttle' => $shuttle, 'vo2max' => $metrics['vo2max']]);
             flash('success', 'Hasil Bleep Test berhasil disimpan.');
         }
         clear_old();
