@@ -123,7 +123,7 @@ CREATE TABLE bleep_tests (
     athlete_name VARCHAR(150) NOT NULL,
     sport VARCHAR(100) NOT NULL,
     gender ENUM('L', 'P') NOT NULL,
-    birth_date DATE NOT NULL,
+    birth_date DATE NULL,
     test_date DATE NOT NULL,
     test_place VARCHAR(100) NOT NULL DEFAULT 'Padang',
     level TINYINT UNSIGNED NOT NULL,
@@ -165,6 +165,7 @@ INSERT INTO migrations (migration) VALUES
     ('004_create_master_people.sql'),
     ('005_add_input_panitia_roles.sql'),
     ('006_create_test_photos.sql'),
-    ('007_create_bleep_tests.sql');
+    ('007_create_bleep_tests.sql'),
+    ('008_allow_null_bleep_birth_date.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;

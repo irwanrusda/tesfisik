@@ -17,6 +17,23 @@ if (isset($_GET['edit'])) {
 
 if (request_method('POST')) {
     verify_csrf();
+    $action = (string) ($_POST['action'] ?? 'save');
+    if ($action === 'delete') {
+        Auth::requireRole('superadmin');
+        $deleteId = (int) ($_POST['id'] ?? 0);
+        try {
+            $deleteStatement = $pdo->prepare('DELETE FROM bleep_tests WHERE id = ?');
+            $deleteStatement->execute([$deleteId]);
+            if ($deleteStatement->rowCount() < 1) {
+                throw new RuntimeException('Data Bleep Test tidak ditemukan.');
+            }
+            flash('success', 'Data Bleep Test berhasil dihapus.');
+        } catch (Throwable $exception) {
+            flash('error', 'Data Bleep Test gagal dihapus: ' . $exception->getMessage());
+        }
+        redirect('bleep-test.php');
+    }
+
     set_old($_POST);
     $id = (int) ($_POST['id'] ?? 0);
     $masterPersonId = (int) ($_POST['master_person_id'] ?? 0);
@@ -38,10 +55,10 @@ if (request_method('POST')) {
         $athleteStatement->execute([$masterPersonId]);
         $athlete = $athleteStatement->fetch();
         if (!$athlete) throw new RuntimeException('Atlet tidak ditemukan pada master data aktif.');
-        if (!$athlete['latest_birth_date']) throw new RuntimeException('Atlet belum memiliki data tanggal lahir pada Tes Fisik.');
-        $birthDate = $athlete['latest_birth_date'];
+        $birthDate = $athlete['latest_birth_date'] ?: null;
 
-        $metrics = bleep_test_metrics($level, $shuttle, calculate_age($birthDate, $testDate));
+        $age = $birthDate ? calculate_age($birthDate, $testDate) : 20;
+        $metrics = bleep_test_metrics($level, $shuttle, $age);
         if ($id > 0) {
             $statement = $pdo->prepare('UPDATE bleep_tests SET master_person_id = ?, athlete_name = ?, sport = ?, gender = ?, birth_date = ?, test_date = ?, test_place = ?, level = ?, shuttle = ?, completed_shuttles = ?, distance_m = ?, speed_kmh = ?, vo2max = ?, category = ?, notes = ? WHERE id = ?');
             $statement->execute([$athlete['id'], $athlete['name'], $athlete['sport'], $athlete['gender'], $birthDate, $testDate, $testPlace, $level, $shuttle, $metrics['completed_shuttles'], $metrics['distance'], $metrics['speed'], $metrics['vo2max'], $category, $notes, $id]);

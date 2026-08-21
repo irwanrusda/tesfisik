@@ -28,8 +28,33 @@ document.querySelectorAll('form[data-confirm]').forEach((form) => {
 
 const autoRefresh = document.querySelector('[data-auto-refresh]');
 if (autoRefresh) {
-    const interval = Number(autoRefresh.dataset.autoRefresh) || 10000;
-    window.setTimeout(() => window.location.reload(), interval);
+    const interval = Number(autoRefresh.dataset.autoRefresh) || 30000;
+    let refreshing = false;
+
+    async function refreshPageContent() {
+        if (refreshing || document.hidden) return;
+        refreshing = true;
+        try {
+            const response = await fetch(window.location.href, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                cache: 'no-store',
+            });
+            if (!response.ok) return;
+
+            const documentCopy = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const updatedContent = documentCopy.querySelector('[data-auto-refresh]');
+            if (updatedContent) {
+                autoRefresh.replaceChildren(...Array.from(updatedContent.childNodes).map((node) => node.cloneNode(true)));
+            }
+        } catch (error) {
+            // Keep the current screen intact when the connection is unavailable.
+        } finally {
+            refreshing = false;
+        }
+    }
+
+    window.setInterval(refreshPageContent, interval);
 }
 
 const heightInput = document.querySelector('[data-height]');
@@ -72,17 +97,16 @@ function updateBleepMetrics() {
     const validation = bleepForm.querySelector('[data-bleep-validation]');
     const submitButton = bleepForm.querySelector('button[type="submit"]');
     let validationMessage = '';
-    if (!birthDate) validationMessage = 'Pilih atlet yang sudah memiliki tanggal lahir pada Tes Fisik.';
-    else if (!testDate) validationMessage = 'Tanggal tes wajib diisi.';
-    else if (testedAt < birth) validationMessage = 'Tanggal tes tidak boleh lebih awal dari tanggal lahir.';
-    else if (age < 6 || age > 100) validationMessage = `Usia atlet saat tes adalah ${age} tahun. Periksa tanggal lahir pada Tes Fisik.`;
+    if (!testDate) validationMessage = 'Tanggal tes wajib diisi.';
+    else if (birth && testedAt < birth) validationMessage = 'Tanggal tes tidak boleh lebih awal dari tanggal lahir.';
+    else if (age !== null && (age < 6 || age > 100)) validationMessage = `Usia atlet saat tes adalah ${age} tahun. Periksa tanggal lahir pada Tes Fisik.`;
     if (validation) {
         validation.textContent = validationMessage;
         validation.hidden = validationMessage === '';
     }
     const selectedAthleteValue = bleepForm.querySelector('[data-bleep-athlete-value]')?.value;
     if (submitButton) submitButton.disabled = validationMessage !== '' || !selectedAthleteValue;
-    const calculationAge = age && age >= 6 && age <= 100 ? age : 20;
+    const calculationAge = age !== null && age >= 6 && age <= 100 ? age : 20;
     const vo2max = 31.025 + (3.238 * speed) - (3.248 * calculationAge) + (0.1536 * speed * calculationAge);
     bleepForm.querySelector('[data-vo2max]').textContent = validationMessage ? '-' : vo2max.toFixed(2);
     bleepForm.querySelector('[data-bleep-speed]').textContent = speed.toFixed(2);
