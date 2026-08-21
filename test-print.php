@@ -39,15 +39,30 @@ $groups = [
     <section><h3>I. DATA DIRI</h3><table class="identity-table"><tr><td>Nama</td><td>: <?= e($test['athlete_name']) ?></td><td>Cabang Olahraga</td><td>: <?= e($test['sport']) ?></td></tr><tr><td>Tempat/Tgl. Lahir (Usia)</td><td>: <?= e($test['birth_place']) ?>, <?= e(format_date($test['birth_date'])) ?> (<?= e(calculate_age($test['birth_date'], $test['test_date'])) ?> Tahun)</td><td>Jenis Kelamin</td><td>: <?= $test['gender'] === 'L' ? 'Laki-Laki' : 'Perempuan' ?></td></tr><tr><td>Tinggi Badan</td><td>: <?= e($test['height_cm']) ?> cm</td><td>Berat Badan</td><td>: <?= e($test['weight_kg']) ?> kg</td></tr><tr><td>IMT</td><td>: <?= e($test['bmi']) ?></td><td>Tanggal Tes</td><td>: <?= e(format_date($test['test_date'])) ?></td></tr></table></section>
     <section><h3>II. HASIL TES KONDISI FISIK</h3><table class="test-table"><thead><tr><th>No.</th><th>Komponen</th><th>Teknik Pengukuran</th><th>Skor</th><th>Kategori</th><th>Ket/Paraf</th></tr></thead><tbody>
     <?php foreach ($groups as $number => $group): ?>
-        <?php foreach ($group['codes'] as $index => $code): $definition = physical_test_items()[$code]; $result = $results[$code] ?? []; ?>
-        <tr><?php if ($index === 0): ?><td rowspan="<?= e(count($group['codes'])) ?>"><?= e($number + 1) ?></td><?php endif; ?><td><?= $index === 0 ? '<strong>' . e($group['component']) . '</strong><br>' : '' ?><?= e($definition['detail']) ?></td><td><?= e($definition['method']) ?></td><td><?= e($result['result_value'] ?? '') ?> <?= e($definition['unit']) ?></td><td><?= e($result['category'] ?? '') ?></td><td><?= e($result['examiner_notes'] ?? '') ?></td></tr>
+        <tr class="component-heading-row">
+            <td rowspan="<?= e(count($group['codes']) + 1) ?>"><?= e($number + 1) ?></td>
+            <td><strong><?= e($group['component']) ?></strong></td>
+            <td colspan="4"></td>
+        </tr>
+        <?php foreach ($group['codes'] as $code): $definition = physical_test_items()[$code]; $result = $results[$code] ?? []; ?>
+        <tr class="measurement-detail-row">
+            <td><?= e($definition['detail'] ?: $definition['method']) ?></td>
+            <td><?= e($definition['method']) ?></td>
+            <td><span class="score-cell"><span><?= e($result['result_value'] ?? '') ?></span><small><?= e($definition['unit']) ?></small></span></td>
+            <td><?= e($result['category'] ?? '') ?></td>
+            <td><?= e($result['examiner_notes'] ?? '') ?></td>
+        </tr>
         <?php endforeach; ?>
     <?php endforeach; ?>
-        <tr>
-            <td><?= e(count($groups) + 1) ?></td>
-            <td><strong>DAYA TAHAN UMUM</strong><br><?= $bleepTest ? 'Level ' . e($bleepTest['level']) . ' / Shuttle ' . e($bleepTest['shuttle']) : '' ?></td>
+        <tr class="component-heading-row">
+            <td rowspan="2"><?= e(count($groups) + 1) ?></td>
+            <td><strong>DAYA TAHAN UMUM</strong></td>
+            <td colspan="4"></td>
+        </tr>
+        <tr class="measurement-detail-row">
+            <td><?= $bleepTest ? 'Level ' . e($bleepTest['level']) . ' / Shuttle ' . e($bleepTest['shuttle']) : 'Estimasi VO2max' ?></td>
             <td>Bleep Test 20 Meter<?= $bleepTest ? '<br><small>' . e(format_date($bleepTest['test_date'])) . '</small>' : '' ?></td>
-            <td><?= $bleepTest ? e($bleepTest['vo2max']) . ' ml/kg/menit' : '' ?></td>
+            <td><span class="score-cell"><span><?= e($bleepTest['vo2max'] ?? '') ?></span><small>ml/kg/menit</small></span></td>
             <td><?= e($bleepTest['category'] ?? '') ?></td>
             <td><?= e($bleepTest['notes'] ?? '') ?></td>
         </tr>

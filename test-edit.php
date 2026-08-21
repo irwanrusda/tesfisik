@@ -17,6 +17,7 @@ if (!$test) {
 
 if (request_method('POST')) {
     verify_csrf();
+    set_old($_POST);
     $photoFiles = uploaded_files('documentation_photos');
     $masterPersonId = (int) ($_POST['master_person_id'] ?? 0);
     $height = nullable_number($_POST['height_cm'] ?? null);
@@ -67,6 +68,7 @@ if (request_method('POST')) {
             $path = test_photo_path($photo['file_name']);
             if (is_file($path)) unlink($path);
         }
+        clear_old();
         flash('success', 'Data tes berhasil diperbarui.');
         redirect('test-view.php?id=' . $id);
     } catch (Throwable $exception) {

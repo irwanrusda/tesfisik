@@ -1,9 +1,13 @@
 <?php
 $isEdit = $test !== null;
-$value = static fn(string $key, mixed $default = '') => $isEdit ? ($test[$key] ?? $default) : old($key, $default);
+$value = static fn(string $key, mixed $default = '') => old($key, $isEdit ? ($test[$key] ?? $default) : $default);
 $resultValue = static function (string $code, string $key) use ($results, $isEdit) {
-    if ($isEdit) return $results[$code][$key] ?? '';
-    return old('results', [])[$code][$key] ?? '';
+    $oldResults = old('results', []);
+    if (isset($oldResults[$code]) && array_key_exists($key === 'result_value' ? 'value' : ($key === 'examiner_notes' ? 'notes' : $key), $oldResults[$code])) {
+        $oldKey = $key === 'result_value' ? 'value' : ($key === 'examiner_notes' ? 'notes' : $key);
+        return $oldResults[$code][$oldKey];
+    }
+    return $isEdit ? ($results[$code][$key] ?? '') : '';
 };
 ?>
 <div class="page-heading">

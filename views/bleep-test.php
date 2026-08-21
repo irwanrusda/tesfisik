@@ -1,8 +1,18 @@
 <?php
-$selectedAthleteId = (int) ($editing['master_person_id'] ?? 0);
-$selectedLevel = (int) ($editing['level'] ?? 1);
-$selectedShuttle = (int) ($editing['shuttle'] ?? 0);
-$selectedMetrics = bleep_test_metrics($selectedLevel, min($selectedShuttle, $protocol[$selectedLevel]['shuttles']), $editing ? calculate_age($editing['birth_date'], $editing['test_date']) : 20);
+$formValue = static fn(string $key, mixed $default = '') => old($key, $editing[$key] ?? $default);
+$selectedAthleteId = (int) $formValue('master_person_id', 0);
+$selectedLevel = max(1, min(21, (int) $formValue('level', 1)));
+$selectedShuttle = max(0, min($protocol[$selectedLevel]['shuttles'], (int) $formValue('shuttle', 0)));
+$previewBirthDate = (string) $formValue('birth_date', '');
+$previewTestDate = (string) $formValue('test_date', date('Y-m-d'));
+$previewAge = 20;
+try {
+    if ($previewBirthDate !== '' && $previewTestDate !== '') $previewAge = calculate_age($previewBirthDate, $previewTestDate);
+    if ($previewAge < 6 || $previewAge > 100) $previewAge = 20;
+} catch (Throwable) {
+    $previewAge = 20;
+}
+$selectedMetrics = bleep_test_metrics($selectedLevel, $selectedShuttle, $previewAge);
 ?>
 <div class="page-heading">
     <div><p class="eyebrow">MODUL DAYA TAHAN AEROBIK</p><h1>Bleep Test VO2max</h1><p>Modul mandiri untuk mencatat Multistage Fitness Test 20 meter.</p></div>
@@ -10,21 +20,22 @@ $selectedMetrics = bleep_test_metrics($selectedLevel, min($selectedShuttle, $pro
 </div>
 
 <form method="post" class="bleep-layout" data-bleep-form>
-    <?= csrf_field() ?><input type="hidden" name="id" value="<?= e($editing['id'] ?? 0) ?>">
+    <?= csrf_field() ?><input type="hidden" name="id" value="<?= e($formValue('id', 0)) ?>">
     <section class="panel bleep-control-panel">
         <div class="panel-header"><div><p class="eyebrow"><?= $editing ? 'PERBARUI HASIL' : 'INPUT HASIL BARU' ?></p><h2>Data Atlet & Hasil Tes</h2></div><span class="live-badge"><i class="fa-solid fa-heart-pulse"></i> VO2max</span></div>
         <div class="bleep-athlete-fields">
             <label class="field field-span-2"><span>Pilih Atlet *</span><div class="searchable-dropdown" data-bleep-athlete-dropdown><input type="search" data-bleep-athlete-search placeholder="Cari nama atau cabang olahraga" autocomplete="off" role="combobox" required><input type="hidden" name="master_person_id" value="<?= e($selectedAthleteId) ?>" data-bleep-athlete-value><div class="searchable-options" data-bleep-athlete-options><?php foreach ($athletes as $athlete): ?><button type="button" class="searchable-option" data-bleep-athlete-option data-id="<?= e($athlete['id']) ?>" data-name="<?= e($athlete['name']) ?>" data-sport="<?= e($athlete['sport']) ?>" data-birth-date="<?= e($athlete['latest_birth_date'] ?? '') ?>" <?= $selectedAthleteId === (int) $athlete['id'] ? 'aria-selected="true"' : '' ?>><strong><?= e($athlete['name']) ?></strong><span><?= e($athlete['sport']) ?><?= $athlete['development_status'] ? ' · ' . e($athlete['development_status']) : '' ?></span></button><?php endforeach; ?><p class="searchable-empty" data-bleep-athlete-empty>Atlet tidak ditemukan.</p></div></div></label>
-            <label class="field"><span>Tanggal Lahir *</span><input type="date" name="birth_date" value="<?= e($editing['birth_date'] ?? '') ?>" data-bleep-birth-date required readonly><small class="field-help">Otomatis mengikuti data Tes Fisik terakhir atlet.</small></label>
-            <label class="field"><span>Tanggal Tes *</span><input type="date" name="test_date" value="<?= e($editing['test_date'] ?? date('Y-m-d')) ?>" data-bleep-test-date required></label>
-            <label class="field field-span-2"><span>Tempat Tes</span><input name="test_place" value="<?= e($editing['test_place'] ?? 'Padang') ?>"></label>
+            <label class="field"><span>Tanggal Lahir *</span><input type="date" name="birth_date" value="<?= e($formValue('birth_date')) ?>" data-bleep-birth-date required readonly><small class="field-help">Otomatis mengikuti data Tes Fisik terakhir atlet.</small></label>
+            <label class="field"><span>Tanggal Tes *</span><input type="date" name="test_date" value="<?= e($formValue('test_date', date('Y-m-d'))) ?>" data-bleep-test-date required></label>
+            <label class="field field-span-2"><span>Tempat Tes</span><input name="test_place" value="<?= e($formValue('test_place', 'Padang')) ?>"></label>
+            <div class="bleep-validation-message field-span-2" data-bleep-validation hidden></div>
         </div>
         <div class="bleep-metrics"><div><span>VO2max</span><strong data-vo2max><?= e($editing['vo2max'] ?? $selectedMetrics['vo2max']) ?></strong><small>ml/kg/menit</small></div><div><span>Kecepatan</span><strong data-bleep-speed><?= e($editing['speed_kmh'] ?? $selectedMetrics['speed']) ?></strong><small>km/jam</small></div><div><span>Total Shuttle</span><strong data-total-shuttles><?= e($editing['completed_shuttles'] ?? $selectedMetrics['completed_shuttles']) ?></strong><small>balikan</small></div><div><span>Total Jarak</span><strong data-bleep-distance><?= e($editing['distance_m'] ?? $selectedMetrics['distance']) ?></strong><small>meter</small></div></div>
         <div class="bleep-steppers">
             <div class="number-stepper"><span>LEVEL TERAKHIR</span><div><button type="button" data-step="level" data-direction="-1"><i class="fa-solid fa-minus"></i></button><input type="number" name="level" value="<?= e($selectedLevel) ?>" min="1" max="21" data-bleep-level required><button type="button" data-step="level" data-direction="1"><i class="fa-solid fa-plus"></i></button></div><small>Rentang level 1 sampai 21</small></div>
             <div class="number-stepper"><span>SHUTTLE / BALIKAN</span><div><button type="button" data-step="shuttle" data-direction="-1"><i class="fa-solid fa-minus"></i></button><input type="number" name="shuttle" value="<?= e($selectedShuttle) ?>" min="0" max="<?= e($protocol[$selectedLevel]['shuttles']) ?>" data-bleep-shuttle required><button type="button" data-step="shuttle" data-direction="1"><i class="fa-solid fa-plus"></i></button></div><small data-shuttle-limit>Maksimal <?= e($protocol[$selectedLevel]['shuttles']) ?> shuttle</small></div>
         </div>
-        <div class="bleep-assessment"><label class="field"><span>Kategori</span><select name="category"><option value="">Pilih kategori</option><?php foreach (['Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Sangat Kurang'] as $category): ?><option value="<?= e($category) ?>" <?= ($editing['category'] ?? '') === $category ? 'selected' : '' ?>><?= e($category) ?></option><?php endforeach; ?></select></label><label class="field"><span>Keterangan / Paraf</span><input name="notes" value="<?= e($editing['notes'] ?? '') ?>"></label></div>
+        <div class="bleep-assessment"><label class="field"><span>Kategori</span><select name="category"><option value="">Pilih kategori</option><?php foreach (['Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Sangat Kurang'] as $category): ?><option value="<?= e($category) ?>" <?= $formValue('category') === $category ? 'selected' : '' ?>><?= e($category) ?></option><?php endforeach; ?></select></label><label class="field"><span>Keterangan / Paraf</span><input name="notes" value="<?= e($formValue('notes')) ?>"></label></div>
         <div class="form-actions"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> <?= $editing ? 'Simpan Perubahan' : 'Simpan Bleep Test' ?></button></div>
     </section>
 

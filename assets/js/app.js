@@ -48,6 +48,7 @@ const bleepForm = document.querySelector('[data-bleep-form]');
 const bleepProtocolShuttles = [0, 7, 8, 8, 9, 9, 10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16];
 const bleepLevelInput = bleepForm?.querySelector('[data-bleep-level]');
 const bleepShuttleInput = bleepForm?.querySelector('[data-bleep-shuttle]');
+let bleepAthleteValue;
 function updateBleepMetrics() {
     if (!bleepForm || !bleepLevelInput || !bleepShuttleInput) return;
     let level = Math.min(21, Math.max(1, Number(bleepLevelInput.value) || 1));
@@ -63,13 +64,27 @@ function updateBleepMetrics() {
     const testDate = bleepForm.querySelector('[data-bleep-test-date]')?.value;
     const birth = birthDate ? new Date(`${birthDate}T00:00:00`) : null;
     const testedAt = testDate ? new Date(`${testDate}T00:00:00`) : null;
-    let age = 20;
+    let age = null;
     if (birth && testedAt && !Number.isNaN(birth.getTime()) && !Number.isNaN(testedAt.getTime())) {
         age = testedAt.getFullYear() - birth.getFullYear();
         if (testedAt.getMonth() < birth.getMonth() || (testedAt.getMonth() === birth.getMonth() && testedAt.getDate() < birth.getDate())) age--;
     }
-    const vo2max = 31.025 + (3.238 * speed) - (3.248 * age) + (0.1536 * speed * age);
-    bleepForm.querySelector('[data-vo2max]').textContent = vo2max.toFixed(2);
+    const validation = bleepForm.querySelector('[data-bleep-validation]');
+    const submitButton = bleepForm.querySelector('button[type="submit"]');
+    let validationMessage = '';
+    if (!birthDate) validationMessage = 'Pilih atlet yang sudah memiliki tanggal lahir pada Tes Fisik.';
+    else if (!testDate) validationMessage = 'Tanggal tes wajib diisi.';
+    else if (testedAt < birth) validationMessage = 'Tanggal tes tidak boleh lebih awal dari tanggal lahir.';
+    else if (age < 6 || age > 100) validationMessage = `Usia atlet saat tes adalah ${age} tahun. Periksa tanggal lahir pada Tes Fisik.`;
+    if (validation) {
+        validation.textContent = validationMessage;
+        validation.hidden = validationMessage === '';
+    }
+    const selectedAthleteValue = bleepForm.querySelector('[data-bleep-athlete-value]')?.value;
+    if (submitButton) submitButton.disabled = validationMessage !== '' || !selectedAthleteValue;
+    const calculationAge = age && age >= 6 && age <= 100 ? age : 20;
+    const vo2max = 31.025 + (3.238 * speed) - (3.248 * calculationAge) + (0.1536 * speed * calculationAge);
+    bleepForm.querySelector('[data-vo2max]').textContent = validationMessage ? '-' : vo2max.toFixed(2);
     bleepForm.querySelector('[data-bleep-speed]').textContent = speed.toFixed(2);
     bleepForm.querySelector('[data-total-shuttles]').textContent = completedShuttles;
     bleepForm.querySelector('[data-bleep-distance]').textContent = completedShuttles * 20;
@@ -120,7 +135,7 @@ updateBleepMetrics();
 
 const bleepAthleteDropdown = document.querySelector('[data-bleep-athlete-dropdown]');
 const bleepAthleteSearch = document.querySelector('[data-bleep-athlete-search]');
-const bleepAthleteValue = document.querySelector('[data-bleep-athlete-value]');
+bleepAthleteValue = document.querySelector('[data-bleep-athlete-value]');
 const bleepAthleteOptions = Array.from(document.querySelectorAll('[data-bleep-athlete-option]'));
 const bleepAthleteEmpty = document.querySelector('[data-bleep-athlete-empty]');
 function filterBleepAthletes() {
@@ -138,6 +153,7 @@ bleepAthleteSearch?.addEventListener('focus', filterBleepAthletes);
 bleepAthleteSearch?.addEventListener('input', () => {
     if (bleepAthleteValue) bleepAthleteValue.value = '';
     filterBleepAthletes();
+    updateBleepMetrics();
 });
 bleepAthleteOptions.forEach((option) => option.addEventListener('click', () => {
     bleepAthleteOptions.forEach((item) => item.setAttribute('aria-selected', 'false'));
@@ -155,9 +171,10 @@ document.addEventListener('click', (event) => {
     if (bleepAthleteDropdown && !bleepAthleteDropdown.contains(event.target)) bleepAthleteDropdown.classList.remove('open');
 });
 bleepForm?.addEventListener('submit', (event) => {
-    if (!bleepAthleteValue?.value) {
+    const validation = bleepForm.querySelector('[data-bleep-validation]');
+    if (!bleepAthleteValue?.value || (validation && !validation.hidden)) {
         event.preventDefault();
-        bleepAthleteSearch?.setCustomValidity('Pilih atlet dari hasil pencarian.');
+        bleepAthleteSearch?.setCustomValidity(!bleepAthleteValue?.value ? 'Pilih atlet dari hasil pencarian.' : 'Periksa data Bleep Test yang belum valid.');
         bleepAthleteSearch?.reportValidity();
         bleepAthleteDropdown?.classList.add('open');
     } else {

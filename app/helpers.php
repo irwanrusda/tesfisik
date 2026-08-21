@@ -151,6 +151,9 @@ function calculate_age(string $birthDate, ?string $atDate = null): int
 {
     $birth = new DateTimeImmutable($birthDate);
     $at = new DateTimeImmutable($atDate ?: 'today');
+    if ($at < $birth) {
+        throw new InvalidArgumentException('Tanggal tes tidak boleh lebih awal dari tanggal lahir.');
+    }
     return $birth->diff($at)->y;
 }
 
@@ -178,8 +181,14 @@ function bleep_test_protocol(): array
 function bleep_test_metrics(int $level, int $shuttle, int $age): array
 {
     $protocol = bleep_test_protocol();
-    if (!isset($protocol[$level]) || $shuttle < 0 || $shuttle > $protocol[$level]['shuttles'] || $age < 6 || $age > 100) {
-        throw new InvalidArgumentException('Level Bleep Test atau usia tidak valid.');
+    if (!isset($protocol[$level])) {
+        throw new InvalidArgumentException('Level Bleep Test harus berada pada rentang 1 sampai 21.');
+    }
+    if ($shuttle < 0 || $shuttle > $protocol[$level]['shuttles']) {
+        throw new InvalidArgumentException("Shuttle level {$level} harus berada pada rentang 0 sampai {$protocol[$level]['shuttles']}.");
+    }
+    if ($age < 6 || $age > 100) {
+        throw new InvalidArgumentException("Usia atlet saat tes adalah {$age} tahun. Bleep Test hanya dapat dihitung untuk usia 6 sampai 100 tahun. Periksa tanggal lahir pada Tes Fisik.");
     }
 
     $previousShuttles = $level > 1 ? $protocol[$level - 1]['cumulative_shuttles'] : 0;

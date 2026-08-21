@@ -17,9 +17,9 @@ if (isset($_GET['edit'])) {
 
 if (request_method('POST')) {
     verify_csrf();
+    set_old($_POST);
     $id = (int) ($_POST['id'] ?? 0);
     $masterPersonId = (int) ($_POST['master_person_id'] ?? 0);
-    $birthDate = (string) ($_POST['birth_date'] ?? '');
     $testDate = (string) ($_POST['test_date'] ?? '');
     $testPlace = trim((string) ($_POST['test_place'] ?? 'Padang')) ?: 'Padang';
     $level = (int) ($_POST['level'] ?? 0);
@@ -28,8 +28,8 @@ if (request_method('POST')) {
     $notes = trim((string) ($_POST['notes'] ?? '')) ?: null;
 
     try {
-        if ($masterPersonId < 1 || $birthDate === '' || $testDate === '') {
-            throw new RuntimeException('Atlet, tanggal lahir, dan tanggal tes wajib diisi.');
+        if ($masterPersonId < 1 || $testDate === '') {
+            throw new RuntimeException('Atlet dan tanggal tes wajib diisi.');
         }
         $athleteStatement = $pdo->prepare("SELECT mp.id, mp.name, mp.gender, s.name AS sport,
             (SELECT at.birth_date FROM athlete_tests at WHERE at.master_person_id = mp.id ORDER BY at.test_date DESC, at.id DESC LIMIT 1) AS latest_birth_date
@@ -52,6 +52,7 @@ if (request_method('POST')) {
             $statement->execute([$testNumber, $athlete['id'], $athlete['name'], $athlete['sport'], $athlete['gender'], $birthDate, $testDate, $testPlace, $level, $shuttle, $metrics['completed_shuttles'], $metrics['distance'], $metrics['speed'], $metrics['vo2max'], $category, $notes, Auth::user()['id']]);
             flash('success', 'Hasil Bleep Test berhasil disimpan.');
         }
+        clear_old();
         redirect('bleep-test.php');
     } catch (Throwable $exception) {
         flash('error', $exception->getMessage());
