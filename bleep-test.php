@@ -46,7 +46,6 @@ if (request_method('POST')) {
     $testPlace = trim((string) ($_POST['test_place'] ?? 'Padang')) ?: 'Padang';
     $level = (int) ($_POST['level'] ?? 0);
     $shuttle = (int) ($_POST['shuttle'] ?? 0);
-    $category = trim((string) ($_POST['category'] ?? '')) ?: null;
     $notes = trim((string) ($_POST['notes'] ?? '')) ?: null;
 
     try {
@@ -62,8 +61,9 @@ if (request_method('POST')) {
         if (!$athlete) throw new RuntimeException('Atlet tidak ditemukan pada master data aktif.');
         $birthDate = $athlete['latest_birth_date'] ?: null;
 
-        $age = $birthDate ? calculate_age($birthDate, $testDate) : 20;
+        $age = $birthDate ? calculate_age($birthDate, $testDate) : null;
         $metrics = bleep_test_metrics($level, $shuttle, $age);
+        $category = vo2max_category((float) $metrics['vo2max'], $athlete['gender'], $age);
         if ($id > 0) {
             $statement = $pdo->prepare('UPDATE bleep_tests SET master_person_id = ?, athlete_name = ?, sport = ?, gender = ?, birth_date = ?, test_date = ?, test_place = ?, level = ?, shuttle = ?, completed_shuttles = ?, distance_m = ?, speed_kmh = ?, vo2max = ?, category = ?, notes = ? WHERE id = ?');
             $statement->execute([$athlete['id'], $athlete['name'], $athlete['sport'], $athlete['gender'], $birthDate, $testDate, $testPlace, $level, $shuttle, $metrics['completed_shuttles'], $metrics['distance'], $metrics['speed'], $metrics['vo2max'], $category, $notes, $id]);

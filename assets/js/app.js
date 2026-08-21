@@ -74,6 +74,43 @@ const bleepProtocolShuttles = [0, 7, 8, 8, 9, 9, 10, 10, 11, 11, 11, 12, 12, 13,
 const bleepLevelInput = bleepForm?.querySelector('[data-bleep-level]');
 const bleepShuttleInput = bleepForm?.querySelector('[data-bleep-shuttle]');
 let bleepAthleteValue;
+function vo2maxAgeGroup(age) {
+    if (age === null || age < 26) return '18-25';
+    if (age < 36) return '26-35';
+    if (age < 46) return '36-45';
+    if (age < 56) return '46-55';
+    if (age < 66) return '56-65';
+    return '65+';
+}
+function vo2maxCategory(vo2max, gender, age) {
+    const group = vo2maxAgeGroup(age);
+    const norms = {
+        L: {
+            '18-25': [60, 52, 47, 42, 37, 30],
+            '26-35': [56, 49, 43, 40, 35, 30],
+            '36-45': [51, 43, 39, 35, 31, 26],
+            '46-55': [45, 39, 36, 32, 29, 25],
+            '56-65': [41, 36, 32, 30, 26, 22],
+            '65+': [37, 33, 29, 26, 22, 20],
+        },
+        P: {
+            '18-25': [56, 47, 42, 38, 33, 28],
+            '26-35': [52, 45, 39, 35, 31, 26],
+            '36-45': [45, 38, 34, 31, 27, 22],
+            '46-55': [40, 34, 31, 28, 25, 20],
+            '56-65': [37, 32, 28, 25, 22, 18],
+            '65+': [32, 28, 25, 22, 19, 17],
+        },
+    };
+    const [excellent, good, aboveAverage, average, belowAverage, poor] = norms[gender === 'P' ? 'P' : 'L'][group];
+    if (vo2max > excellent) return 'Excellent';
+    if (vo2max >= good) return 'Good';
+    if (vo2max >= aboveAverage) return 'Above Average';
+    if (vo2max >= average) return 'Average';
+    if (vo2max >= belowAverage) return 'Below Average';
+    if (vo2max >= poor) return 'Poor';
+    return 'Very Poor';
+}
 function updateBleepMetrics() {
     if (!bleepForm || !bleepLevelInput || !bleepShuttleInput) return;
     let level = Math.min(21, Math.max(1, Number(bleepLevelInput.value) || 1));
@@ -107,6 +144,10 @@ function updateBleepMetrics() {
     if (submitButton) submitButton.disabled = validationMessage !== '' || !selectedAthleteValue;
     const levelShuttleScore = level + (shuttle / ((level * 0.4325) + 7.0048));
     const vo2max = (3.46 * levelShuttleScore) + 12.19;
+    const selectedOption = Array.from(document.querySelectorAll('[data-bleep-athlete-option]')).find((option) => option.dataset.id === selectedAthleteValue);
+    const gender = selectedOption?.dataset.gender || 'L';
+    const categoryInput = bleepForm.querySelector('[data-bleep-category]');
+    if (categoryInput) categoryInput.value = validationMessage ? '-' : vo2maxCategory(vo2max, gender, age);
     bleepForm.querySelector('[data-vo2max]').textContent = validationMessage ? '-' : vo2max.toFixed(1);
     bleepForm.querySelector('[data-bleep-speed]').textContent = speed.toFixed(2);
     bleepForm.querySelector('[data-total-shuttles]').textContent = completedShuttles;

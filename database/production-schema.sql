@@ -192,6 +192,7 @@ INSERT INTO migrations (migration) VALUES
     ('007_create_bleep_tests.sql'),
     ('008_allow_null_bleep_birth_date.sql'),
     ('009_create_audit_logs.sql'),
-    ('010_recalculate_bleep_vo2max_table.sql');
+    ('010_recalculate_bleep_vo2max_table.sql'),
+    ('011_recalculate_bleep_categories.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;

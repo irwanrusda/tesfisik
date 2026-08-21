@@ -215,6 +215,49 @@ function calculate_bleep_vo2max(int $level, int $age = 20, int $shuttle = 0): fl
     return bleep_test_metrics($level, $shuttle)['vo2max'];
 }
 
+function vo2max_age_group(?int $age): string
+{
+    if ($age === null || $age < 26) return '18-25';
+    if ($age < 36) return '26-35';
+    if ($age < 46) return '36-45';
+    if ($age < 56) return '46-55';
+    if ($age < 66) return '56-65';
+    return '65+';
+}
+
+function vo2max_category(float $vo2max, string $gender, ?int $age = null): string
+{
+    $group = vo2max_age_group($age);
+    $genderKey = $gender === 'P' ? 'P' : 'L';
+    $norms = [
+        'L' => [
+            '18-25' => [60, 52, 47, 42, 37, 30],
+            '26-35' => [56, 49, 43, 40, 35, 30],
+            '36-45' => [51, 43, 39, 35, 31, 26],
+            '46-55' => [45, 39, 36, 32, 29, 25],
+            '56-65' => [41, 36, 32, 30, 26, 22],
+            '65+' => [37, 33, 29, 26, 22, 20],
+        ],
+        'P' => [
+            '18-25' => [56, 47, 42, 38, 33, 28],
+            '26-35' => [52, 45, 39, 35, 31, 26],
+            '36-45' => [45, 38, 34, 31, 27, 22],
+            '46-55' => [40, 34, 31, 28, 25, 20],
+            '56-65' => [37, 32, 28, 25, 22, 18],
+            '65+' => [32, 28, 25, 22, 19, 17],
+        ],
+    ];
+    [$excellent, $good, $aboveAverage, $average, $belowAverage, $poor] = $norms[$genderKey][$group];
+
+    if ($vo2max > $excellent) return 'Excellent';
+    if ($vo2max >= $good) return 'Good';
+    if ($vo2max >= $aboveAverage) return 'Above Average';
+    if ($vo2max >= $average) return 'Average';
+    if ($vo2max >= $belowAverage) return 'Below Average';
+    if ($vo2max >= $poor) return 'Poor';
+    return 'Very Poor';
+}
+
 function uploaded_files(string $field): array
 {
     $files = $_FILES[$field] ?? null;
