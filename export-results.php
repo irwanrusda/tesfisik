@@ -52,8 +52,8 @@ foreach ($tests as $index => $test) {
         $indicator = physical_test_indicator($test['sport'], $test['gender'], $code, $result['result_value'] ?? null);
         $row[] = $result && $result['result_value'] !== null ? (float) $result['result_value'] : '';
         if (!$raw) {
-            $row[] = $indicator['available'] ? $indicator['operator'] . ' ' . format_number_id($indicator['threshold']) : '-';
-            $row[] = $indicator['available'] ? $indicator['label'] : '-';
+            $row[] = $indicator['available'] ? $indicator['operator'] . ' ' . format_number_id($indicator['threshold']) : 'Belum tersedia';
+            $row[] = $indicator['available'] ? $indicator['label'] : 'Indikator belum tersedia';
         }
     }
     $physicalRows[] = $row;
@@ -82,8 +82,8 @@ foreach ($bleepTests as $index => $test) {
         $test['vo2max'],
     ];
     if (!$raw) {
-        $bleepRow[] = $indicator['available'] ? $indicator['operator'] . ' ' . format_number_id($indicator['threshold']) : '-';
-        $bleepRow[] = $indicator['available'] ? $indicator['label'] : '-';
+        $bleepRow[] = $indicator['available'] ? $indicator['operator'] . ' ' . format_number_id($indicator['threshold']) : 'Belum tersedia';
+        $bleepRow[] = $indicator['available'] ? $indicator['label'] : 'Indikator belum tersedia';
     }
     $bleepRows[] = $bleepRow;
 }
