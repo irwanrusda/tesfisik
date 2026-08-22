@@ -38,6 +38,7 @@ CREATE TABLE sports (
 CREATE TABLE master_people (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     source_key CHAR(64) NOT NULL UNIQUE,
+    source VARCHAR(20) NOT NULL DEFAULT 'spreadsheet',
     name VARCHAR(150) NOT NULL,
     person_type ENUM('Atlet', 'Pelatih') NOT NULL,
     gender ENUM('L', 'P') NOT NULL,
@@ -154,7 +155,7 @@ CREATE TABLE audit_logs (
     username VARCHAR(50) NOT NULL,
     user_role VARCHAR(30) NOT NULL,
     action ENUM('create', 'update', 'delete') NOT NULL,
-    module ENUM('tes_fisik', 'tes_fisik_pos', 'bleep_test') NOT NULL,
+    module ENUM('tes_fisik', 'tes_fisik_pos', 'bleep_test', 'master_data') NOT NULL,
     record_id BIGINT UNSIGNED NULL,
     record_number VARCHAR(30) NULL,
     athlete_name VARCHAR(150) NOT NULL,
@@ -206,6 +207,8 @@ INSERT INTO migrations (migration) VALUES
     ('011_recalculate_bleep_categories.sql'),
     ('012_add_test_code_to_photos.sql'),
     ('013_add_station_audit_module.sql'),
-    ('014_create_test_settings.sql');
+    ('014_create_test_settings.sql'),
+    ('015_add_master_people_source.sql'),
+    ('016_add_master_data_audit_module.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;

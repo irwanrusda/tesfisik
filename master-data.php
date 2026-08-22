@@ -13,11 +13,12 @@ if (request_method('POST')) {
         if ($action === 'add_athlete') {
             set_old($_POST);
             $athlete = MasterDataSync::addAthlete($_POST);
+            write_audit_log(Database::connection(), 'create', 'master_data', ['id' => $athlete['id'], 'athlete_name' => $athlete['name'], 'sport' => $athlete['sport']], ['source' => 'website']);
             clear_old();
-            flash('success', "Atlet {$athlete['name']} berhasil ditambahkan ke Google Sheet dan database.");
+            flash('success', "Atlet {$athlete['name']} berhasil ditambahkan ke database website. Silakan copy manual ke spreadsheet bila diperlukan.");
         } else {
             $summary = MasterDataSync::run();
-            flash('success', "Sinkronisasi selesai: {$summary['athletes']} atlet, {$summary['coaches']} pelatih, dan {$summary['sports']} cabor.");
+            flash('success', "Sinkronisasi selesai: {$summary['athletes']} atlet, {$summary['coaches']} pelatih, dan {$summary['sports']} cabor. Data atlet dari website tetap dipertahankan.");
         }
     } catch (Throwable $exception) {
         flash('error', ($action === 'add_athlete' ? 'Penambahan atlet gagal: ' : 'Sinkronisasi gagal: ') . $exception->getMessage());
@@ -35,7 +36,10 @@ if ($sport !== '') { $where[] = 'sports.name = ?'; $params[] = $sport; }
 if ($q !== '') { $where[] = 'master_people.name LIKE ?'; $params[] = "%{$q}%"; }
 
 $pdo = Database::connection();
-$statement = $pdo->prepare('SELECT master_people.*, sports.name AS sport_name FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE ' . implode(' AND ', $where) . ' ORDER BY sports.name, master_people.person_type, master_people.name');
+$sourceColumnStatement = $pdo->prepare('SHOW COLUMNS FROM master_people LIKE ?');
+$sourceColumnStatement->execute(['source']);
+$sourceSelect = $sourceColumnStatement->fetch() ? 'master_people.source' : "'spreadsheet'";
+$statement = $pdo->prepare('SELECT master_people.*, ' . $sourceSelect . ' AS data_source, sports.name AS sport_name FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE ' . implode(' AND ', $where) . ' ORDER BY sports.name, master_people.person_type, master_people.name');
 $statement->execute($params);
 $people = $statement->fetchAll();
 $sports = $pdo->query('SELECT name FROM sports WHERE is_active = 1 ORDER BY name')->fetchAll(PDO::FETCH_COLUMN);

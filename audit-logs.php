@@ -6,7 +6,7 @@ require __DIR__ . '/app/bootstrap.php';
 Auth::requireRole('superadmin');
 
 $q = trim((string) ($_GET['q'] ?? ''));
-$module = in_array($_GET['module'] ?? '', ['tes_fisik', 'tes_fisik_pos', 'bleep_test'], true) ? $_GET['module'] : '';
+$module = in_array($_GET['module'] ?? '', ['tes_fisik', 'tes_fisik_pos', 'bleep_test', 'master_data'], true) ? $_GET['module'] : '';
 $action = in_array($_GET['action'] ?? '', ['create', 'update', 'delete'], true) ? $_GET['action'] : '';
 $from = (string) ($_GET['from'] ?? '');
 $to = (string) ($_GET['to'] ?? '');

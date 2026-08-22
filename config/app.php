@@ -11,5 +11,4 @@ return [
     'google_sheet_id' => env('GOOGLE_SHEET_ID', ''),
     'google_sheet_gid' => env('GOOGLE_SHEET_GID', ''),
     'google_sheet_name' => env('GOOGLE_SHEET_NAME', 'Atlit dan Pelatih'),
-    'google_service_account_json' => env('GOOGLE_SERVICE_ACCOUNT_JSON', ''),
 ];
