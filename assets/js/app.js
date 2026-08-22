@@ -134,6 +134,55 @@ stationFilter?.addEventListener('submit', (event) => {
     runStationSearch();
 });
 
+const masterFilter = document.querySelector('[data-master-filter]');
+const masterSearch = document.querySelector('[data-master-search]');
+let masterSearchTimer;
+let masterSearchController;
+
+async function runMasterSearch() {
+    if (!masterFilter) return;
+    masterSearchController?.abort();
+    masterSearchController = new AbortController();
+    const url = new URL(window.location.href);
+    const data = new FormData(masterFilter);
+    for (const [key, value] of data.entries()) {
+        if (String(value) === '') url.searchParams.delete(key);
+        else url.searchParams.set(key, String(value));
+    }
+
+    const results = document.querySelector('[data-master-results]');
+    results?.classList.add('is-loading');
+    try {
+        const response = await fetch(url, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            cache: 'no-store',
+            signal: masterSearchController.signal,
+        });
+        if (!response.ok) return;
+        const documentCopy = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const updatedResults = documentCopy.querySelector('[data-master-results]');
+        const currentResults = document.querySelector('[data-master-results]');
+        if (!updatedResults || !currentResults) return;
+        currentResults.replaceWith(updatedResults);
+        window.history.replaceState({}, '', url);
+    } catch (error) {
+        if (error.name !== 'AbortError') console.error('Filter master data gagal', error);
+    } finally {
+        document.querySelector('[data-master-results]')?.classList.remove('is-loading');
+    }
+}
+
+masterSearch?.addEventListener('input', () => {
+    window.clearTimeout(masterSearchTimer);
+    masterSearchTimer = window.setTimeout(runMasterSearch, 300);
+});
+masterFilter?.querySelectorAll('[data-master-filter-field]').forEach((field) => field.addEventListener('change', runMasterSearch));
+masterFilter?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    runMasterSearch();
+});
+
 const autoRefresh = document.querySelector('[data-auto-refresh]');
 if (autoRefresh) {
     const interval = Number(autoRefresh.dataset.autoRefresh) || 30000;

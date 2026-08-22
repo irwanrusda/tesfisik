@@ -122,8 +122,14 @@ final class MasterDataSync
 
     private static function hasColumn(PDO $pdo, string $table, string $column): bool
     {
-        $statement = $pdo->prepare("SHOW COLUMNS FROM `{$table}` LIKE ?");
-        $statement->execute([$column]);
-        return (bool) $statement->fetch();
+        $statement = $pdo->prepare(
+            'SELECT COUNT(*)
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = ?
+               AND COLUMN_NAME = ?'
+        );
+        $statement->execute([$table, $column]);
+        return (int) $statement->fetchColumn() > 0;
     }
 }

@@ -32,14 +32,14 @@ $oldValue = function (string $key, $default = '') {
     <article class="stat-card accent-green"><span>Cabang Olahraga</span><strong><?= e(count($sports)) ?></strong><small>Sinkron terakhir <?= e($counts['last_sync'] ? format_date($counts['last_sync'], 'd-m-Y H:i') : '-') ?></small></article>
 </section>
 <section class="panel filter-panel">
-    <form method="get" class="filter-grid master-filter">
-        <label class="field"><span>Cari nama</span><input name="q" value="<?= e($q) ?>" placeholder="Nama atlet atau pelatih"></label>
-        <label class="field"><span>Jenis Data</span><select name="type"><option value="">Semua</option><option value="Atlet" <?= $type === 'Atlet' ? 'selected' : '' ?>>Atlet</option><option value="Pelatih" <?= $type === 'Pelatih' ? 'selected' : '' ?>>Pelatih</option></select></label>
-        <label class="field"><span>Cabang Olahraga</span><select name="sport"><option value="">Semua cabor</option><?php foreach ($sports as $item): ?><option value="<?= e($item) ?>" <?= $sport === $item ? 'selected' : '' ?>><?= e($item) ?></option><?php endforeach; ?></select></label>
+    <form method="get" class="filter-grid master-filter" data-master-filter>
+        <label class="field"><span>Cari nama</span><input name="q" value="<?= e($q) ?>" placeholder="Nama atlet atau pelatih" autocomplete="off" data-master-search></label>
+        <label class="field"><span>Jenis Data</span><select name="type" data-master-filter-field><option value="">Semua</option><option value="Atlet" <?= $type === 'Atlet' ? 'selected' : '' ?>>Atlet</option><option value="Pelatih" <?= $type === 'Pelatih' ? 'selected' : '' ?>>Pelatih</option></select></label>
+        <label class="field"><span>Cabang Olahraga</span><select name="sport" data-master-filter-field><option value="">Semua cabor</option><?php foreach ($sports as $item): ?><option value="<?= e($item) ?>" <?= $sport === $item ? 'selected' : '' ?>><?= e($item) ?></option><?php endforeach; ?></select></label>
         <div class="filter-actions"><button class="btn btn-primary" type="submit">Terapkan</button><a class="btn btn-light" href="<?= e(base_url('master-data.php')) ?>">Reset</a></div>
     </form>
 </section>
-<section class="panel">
+<section class="panel" data-master-results>
     <div class="panel-header"><div><p class="eyebrow">DAFTAR MASTER</p><h2>Atlet dan Pelatih</h2></div><span class="count-badge"><?= e(count($people)) ?> data</span></div>
     <div class="table-wrap"><table><thead><tr><th>Nama</th><th>Jenis</th><th>L/P</th><th>Cabor</th><th>Prestasi</th><th>Status</th><th>Keterangan</th></tr></thead><tbody>
     <?php if (!$people): ?><tr><td colspan="7" class="empty-state">Belum ada master data. Superadmin dapat menjalankan sinkronisasi atau menambah atlet manual.</td></tr><?php endif; ?>
