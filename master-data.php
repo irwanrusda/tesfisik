@@ -11,10 +11,10 @@ if (request_method('POST')) {
     $action = (string) ($_POST['action'] ?? 'sync');
     try {
         if ($action === 'add_athlete') {
-            set_old($_POST);
+            function_exists('set_old') ? set_old($_POST) : $_SESSION['_old'] = $_POST;
             $athlete = MasterDataSync::addAthlete($_POST);
             write_audit_log(Database::connection(), 'create', 'master_data', ['id' => $athlete['id'], 'athlete_name' => $athlete['name'], 'sport' => $athlete['sport']], ['source' => 'website']);
-            clear_old();
+            function_exists('clear_old') ? clear_old() : unset($_SESSION['_old']);
             flash('success', "Atlet {$athlete['name']} berhasil ditambahkan ke database website. Silakan copy manual ke spreadsheet bila diperlukan.");
         } else {
             $summary = MasterDataSync::run();

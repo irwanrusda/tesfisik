@@ -1,3 +1,6 @@
+<?php
+$oldValue = static fn(string $key, mixed $default = ''): mixed => function_exists('old') ? old($key, $default) : ($_SESSION['_old'][$key] ?? $default);
+?>
 <div class="page-heading">
     <div><p class="eyebrow">SUMBER GOOGLE SHEET & WEBSITE</p><h1>Master Atlet & Pelatih</h1><p>Daftar resmi nama, cabor, prestasi, dan status pembinaan. Atlet dari website tetap aktif saat sinkron Google Sheet.</p></div>
     <?php if ((Auth::user()['role'] ?? '') === 'superadmin'): ?>
@@ -9,12 +12,12 @@
     <div class="panel-header"><div><p class="eyebrow">SUPERADMIN</p><h2>Tambah Atlet ke Master Data</h2><p>Data akan disimpan di database website dan langsung tersedia di aplikasi. Setelah itu Bang Irwan bisa copy manual ke spreadsheet.</p></div><span class="count-badge"><i class="fa-solid fa-database"></i> Website</span></div>
     <form method="post" class="add-athlete-form">
         <?= csrf_field() ?><input type="hidden" name="action" value="add_athlete">
-        <label class="field field-span-2"><span>Nama Atlet *</span><input name="name" value="<?= e(old('name')) ?>" required></label>
-        <label class="field"><span>Jenis Kelamin *</span><select name="gender" required><option value="">Pilih</option><option value="L" <?= old('gender') === 'L' ? 'selected' : '' ?>>Laki-Laki</option><option value="P" <?= old('gender') === 'P' ? 'selected' : '' ?>>Perempuan</option></select></label>
-        <label class="field"><span>Cabang Olahraga *</span><input name="sport" value="<?= e(old('sport')) ?>" list="sports-list" required><datalist id="sports-list"><?php foreach ($sports as $item): ?><option value="<?= e($item) ?>"><?php endforeach; ?></datalist></label>
-        <label class="field"><span>Prestasi</span><input name="achievement" value="<?= e(old('achievement')) ?>" placeholder="Contoh: PON Beladiri 2025"></label>
-        <label class="field"><span>Status Pembinaan</span><select name="development_status"><option value="">Belum ditentukan</option><?php foreach (['Andalan', 'Prioritas', 'Potensial'] as $item): ?><option value="<?= e($item) ?>" <?= old('development_status') === $item ? 'selected' : '' ?>><?= e($item) ?></option><?php endforeach; ?></select></label>
-        <label class="field field-span-2"><span>Keterangan</span><textarea name="description" rows="3"><?= e(old('description')) ?></textarea></label>
+        <label class="field field-span-2"><span>Nama Atlet *</span><input name="name" value="<?= e($oldValue('name')) ?>" required></label>
+        <label class="field"><span>Jenis Kelamin *</span><select name="gender" required><option value="">Pilih</option><option value="L" <?= $oldValue('gender') === 'L' ? 'selected' : '' ?>>Laki-Laki</option><option value="P" <?= $oldValue('gender') === 'P' ? 'selected' : '' ?>>Perempuan</option></select></label>
+        <label class="field"><span>Cabang Olahraga *</span><input name="sport" value="<?= e($oldValue('sport')) ?>" list="sports-list" required><datalist id="sports-list"><?php foreach ($sports as $item): ?><option value="<?= e($item) ?>"><?php endforeach; ?></datalist></label>
+        <label class="field"><span>Prestasi</span><input name="achievement" value="<?= e($oldValue('achievement')) ?>" placeholder="Contoh: PON Beladiri 2025"></label>
+        <label class="field"><span>Status Pembinaan</span><select name="development_status"><option value="">Belum ditentukan</option><?php foreach (['Andalan', 'Prioritas', 'Potensial'] as $item): ?><option value="<?= e($item) ?>" <?= $oldValue('development_status') === $item ? 'selected' : '' ?>><?= e($item) ?></option><?php endforeach; ?></select></label>
+        <label class="field field-span-2"><span>Keterangan</span><textarea name="description" rows="3"><?= e($oldValue('description')) ?></textarea></label>
         <div class="form-actions field-span-2"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan ke Website</button></div>
     </form>
 </section>
