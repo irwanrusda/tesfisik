@@ -45,10 +45,7 @@ if ($sport !== '') { $where[] = 'sports.name = ?'; $params[] = $sport; }
 if ($q !== '') { $where[] = 'master_people.name LIKE ?'; $params[] = "%{$q}%"; }
 
 $pdo = Database::connection();
-$sourceColumnStatement = $pdo->prepare('SHOW COLUMNS FROM master_people LIKE ?');
-$sourceColumnStatement->execute(['source']);
-$sourceSelect = $sourceColumnStatement->fetch() ? 'master_people.source' : "'spreadsheet'";
-$statement = $pdo->prepare('SELECT master_people.*, ' . $sourceSelect . ' AS data_source, sports.name AS sport_name FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE ' . implode(' AND ', $where) . ' ORDER BY sports.name, master_people.person_type, master_people.name');
+$statement = $pdo->prepare('SELECT master_people.*, sports.name AS sport_name FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE ' . implode(' AND ', $where) . ' ORDER BY sports.name, master_people.person_type, master_people.name');
 $statement->execute($params);
 $people = $statement->fetchAll();
 $sports = $pdo->query('SELECT name FROM sports WHERE is_active = 1 ORDER BY name')->fetchAll(PDO::FETCH_COLUMN);

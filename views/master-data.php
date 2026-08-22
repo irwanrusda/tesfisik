@@ -1,8 +1,10 @@
 <?php
-$oldValue = static fn(string $key, mixed $default = ''): mixed => function_exists('old') ? old($key, $default) : ($_SESSION['_old'][$key] ?? $default);
+$oldValue = function (string $key, $default = '') {
+    return function_exists('old') ? old($key, $default) : ($_SESSION['_old'][$key] ?? $default);
+};
 ?>
 <div class="page-heading">
-    <div><p class="eyebrow">SUMBER GOOGLE SHEET & WEBSITE</p><h1>Master Atlet & Pelatih</h1><p>Daftar resmi nama, cabor, prestasi, dan status pembinaan. Atlet dari website tetap aktif saat sinkron Google Sheet.</p></div>
+    <div><p class="eyebrow">SUMBER GOOGLE SHEET & WEBSITE</p><h1>Master Atlet & Pelatih</h1><p>Daftar resmi nama, cabor, prestasi, dan status pembinaan.</p></div>
     <?php $currentRole = Auth::user()['role'] ?? ''; ?>
     <?php if (in_array($currentRole, ['superadmin', 'input'], true)): ?>
         <div class="button-row"><a class="btn btn-primary" href="#tambah-atlet"><i class="fa-solid fa-user-plus"></i> Tambah Atlet</a><?php if ($currentRole === 'superadmin'): ?><form method="post" data-confirm="Ambil ulang data dari Google Sheet? Data atlet yang ditambahkan dari website tetap dipertahankan."><?= csrf_field() ?><input type="hidden" name="action" value="sync"><button class="btn btn-light" type="submit">Sinkronkan Google Sheet</button></form><?php endif; ?></div>
@@ -39,8 +41,8 @@ $oldValue = static fn(string $key, mixed $default = ''): mixed => function_exist
 </section>
 <section class="panel">
     <div class="panel-header"><div><p class="eyebrow">DAFTAR MASTER</p><h2>Atlet dan Pelatih</h2></div><span class="count-badge"><?= e(count($people)) ?> data</span></div>
-    <div class="table-wrap"><table><thead><tr><th>Nama</th><th>Jenis</th><th>L/P</th><th>Cabor</th><th>Sumber</th><th>Prestasi</th><th>Status</th><th>Keterangan</th></tr></thead><tbody>
-    <?php if (!$people): ?><tr><td colspan="8" class="empty-state">Belum ada master data. Superadmin dapat menjalankan sinkronisasi atau menambah atlet manual.</td></tr><?php endif; ?>
-    <?php foreach ($people as $person): ?><tr><td><strong><?= e($person['name']) ?></strong></td><td><span class="role-badge"><?= e($person['person_type']) ?></span></td><td><?= e($person['gender']) ?></td><td><strong><?= e($person['sport_name']) ?></strong></td><td><span class="role-badge"><?= e(($person['data_source'] ?? 'spreadsheet') === 'website' ? 'Website' : 'Spreadsheet') ?></span></td><td><?= e($person['achievement'] ?: '-') ?></td><td><?= e($person['development_status'] ?: '-') ?></td><td class="wrap-cell"><?= e($person['description'] ?: '-') ?></td></tr><?php endforeach; ?>
+    <div class="table-wrap"><table><thead><tr><th>Nama</th><th>Jenis</th><th>L/P</th><th>Cabor</th><th>Prestasi</th><th>Status</th><th>Keterangan</th></tr></thead><tbody>
+    <?php if (!$people): ?><tr><td colspan="7" class="empty-state">Belum ada master data. Superadmin dapat menjalankan sinkronisasi atau menambah atlet manual.</td></tr><?php endif; ?>
+    <?php foreach ($people as $person): ?><tr><td><strong><?= e($person['name']) ?></strong></td><td><span class="role-badge"><?= e($person['person_type']) ?></span></td><td><?= e($person['gender']) ?></td><td><strong><?= e($person['sport_name']) ?></strong></td><td><?= e($person['achievement'] ?: '-') ?></td><td><?= e($person['development_status'] ?: '-') ?></td><td class="wrap-cell"><?= e($person['description'] ?: '-') ?></td></tr><?php endforeach; ?>
     </tbody></table></div>
 </section>
