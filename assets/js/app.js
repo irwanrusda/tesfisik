@@ -56,31 +56,88 @@ document.querySelectorAll('form[data-confirm]').forEach((form) => {
     });
 });
 
+function stationFormState(form) {
+    const values = [];
+    form.querySelectorAll('input, select, textarea').forEach((field) => {
+        if (!field.name || field.name === '_token') return;
+        if (field.type === 'file') values.push([field.name, Array.from(field.files || []).map((file) => `${file.name}:${file.size}:${file.lastModified}`)]);
+        else if (field.type === 'checkbox' || field.type === 'radio') values.push([field.name, field.checked ? field.value : '']);
+        else values.push([field.name, field.value]);
+    });
+    return JSON.stringify(values);
+}
+
+function initializeStationFormState(container = document) {
+    container.querySelectorAll('.station-score-form').forEach((form) => {
+        form.dataset.initialState = stationFormState(form);
+    });
+}
+
+const stationFilter = document.querySelector('[data-station-filter]');
+const stationSearch = document.querySelector('[data-station-search]');
+let stationSearchTimer;
+let stationSearchController;
+
+function stationFormsAreDirty() {
+    return Array.from(document.querySelectorAll('.station-score-form')).some((form) =>
+        form.dataset.initialState && form.dataset.initialState !== stationFormState(form)
+    );
+}
+
+async function runStationSearch() {
+    if (!stationFilter || !stationSearch || stationFormsAreDirty()) return;
+    stationSearchController?.abort();
+    stationSearchController = new AbortController();
+    const url = new URL(window.location.href);
+    const data = new FormData(stationFilter);
+    for (const [key, value] of data.entries()) {
+        if (String(value) === '') url.searchParams.delete(key);
+        else url.searchParams.set(key, String(value));
+    }
+
+    const results = document.querySelector('[data-station-results]');
+    results?.classList.add('is-loading');
+    try {
+        const response = await fetch(url, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            cache: 'no-store',
+            signal: stationSearchController.signal,
+        });
+        if (!response.ok) return;
+        const documentCopy = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const updatedResults = documentCopy.querySelector('[data-station-results]');
+        const currentResults = document.querySelector('[data-station-results]');
+        if (!updatedResults || !currentResults || stationFormsAreDirty()) return;
+        currentResults.replaceWith(updatedResults);
+        initializeStationFormState(document);
+        initializePhotoInputs(document);
+        window.history.replaceState({}, '', url);
+    } catch (error) {
+        if (error.name !== 'AbortError') console.error('Pencarian pos gagal', error);
+    } finally {
+        document.querySelector('[data-station-results]')?.classList.remove('is-loading');
+    }
+}
+
+stationSearch?.addEventListener('input', () => {
+    window.clearTimeout(stationSearchTimer);
+    stationSearchTimer = window.setTimeout(runStationSearch, 300);
+});
+
+stationFilter?.querySelectorAll('select, input[type="date"]').forEach((field) => {
+    field.addEventListener('change', runStationSearch);
+});
+
+stationFilter?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    runStationSearch();
+});
+
 const autoRefresh = document.querySelector('[data-auto-refresh]');
 if (autoRefresh) {
     const interval = Number(autoRefresh.dataset.autoRefresh) || 30000;
     let refreshing = false;
-
-    function stationFormState(form) {
-        const values = [];
-        form.querySelectorAll('input, select, textarea').forEach((field) => {
-            if (!field.name || field.name === '_token') return;
-            if (field.type === 'file') {
-                values.push([field.name, Array.from(field.files || []).map((file) => `${file.name}:${file.size}:${file.lastModified}`)]);
-            } else if (field.type === 'checkbox' || field.type === 'radio') {
-                values.push([field.name, field.checked ? field.value : '']);
-            } else {
-                values.push([field.name, field.value]);
-            }
-        });
-        return JSON.stringify(values);
-    }
-
-    function initializeStationFormState(container) {
-        container.querySelectorAll('.station-score-form').forEach((form) => {
-            form.dataset.initialState = stationFormState(form);
-        });
-    }
 
     function stationHasUnsavedInput() {
         if (!autoRefresh.hasAttribute('data-preserve-station-forms')) return false;
@@ -503,5 +560,7 @@ function initializePhotoInputs(container = document) {
         });
     });
 }
+
+initializeStationFormState();
 
 initializePhotoInputs();

@@ -24,15 +24,15 @@
     <div class="metric-card metric-success"><span>Selesai</span><strong><?= e((int) ($counts['done'] ?? 0)) ?></strong><small>Sudah isi</small></div>
 </section>
 <section class="panel filter-panel">
-    <form class="filter-grid station-filter" method="get">
+    <form class="filter-grid station-filter" method="get" data-station-filter>
         <input type="hidden" name="code" value="<?= e($code) ?>">
         <label class="field"><span>Tanggal Tes</span><input type="date" name="date" value="<?= e($date) ?>"></label>
         <label class="field"><span>Status</span><select name="status"><option value="waiting" <?= $status === 'waiting' ? 'selected' : '' ?>>Menunggu</option><option value="done" <?= $status === 'done' ? 'selected' : '' ?>>Selesai</option><option value="all" <?= $status === 'all' ? 'selected' : '' ?>>Semua</option></select></label>
-        <label class="field"><span>Cari Atlet/Cabor</span><input name="q" value="<?= e($q) ?>" placeholder="Nama atlet, cabor, atau nomor tes"></label>
+        <label class="field"><span>Cari Atlet/Cabor</span><input name="q" value="<?= e($q) ?>" placeholder="Nama atlet, cabor, atau nomor tes" autocomplete="off" data-station-search></label>
         <div class="filter-actions"><button class="btn btn-primary" type="submit">Terapkan</button><a class="btn btn-light" href="<?= e(base_url('test-station.php?code=' . urlencode($code))) ?>">Reset</a></div>
     </form>
 </section>
-<section class="panel station-list-panel">
+<section class="panel station-list-panel" data-station-results>
     <div class="panel-header"><div><p class="eyebrow">DAFTAR ATLET</p><h2><?= $status === 'waiting' ? 'Atlet Menunggu' : ($status === 'done' ? 'Atlet Selesai' : 'Semua Atlet') ?></h2></div><span class="count-badge"><?= e(count($rows)) ?> data</span></div>
     <div class="station-list">
         <?php if (!$rows): ?><p class="empty-state">Belum ada atlet pada filter ini.</p><?php endif; ?>

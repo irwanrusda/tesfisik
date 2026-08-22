@@ -23,7 +23,11 @@ if (request_method('POST')) {
                 // Audit master_data membutuhkan migrasi enum terbaru. Jangan gagalkan tambah atlet
                 // bila file sudah terdeploy tetapi migrasi belum sempat berjalan.
             }
-            function_exists('clear_old') ? clear_old() : unset($_SESSION['_old']);
+            if (function_exists('clear_old')) {
+                clear_old();
+            } else {
+                unset($_SESSION['_old']);
+            }
             flash('success', "Atlet {$athlete['name']} berhasil ditambahkan ke database website. Silakan copy manual ke spreadsheet bila diperlukan.");
         } else {
             $summary = MasterDataSync::run();
@@ -45,10 +49,18 @@ if ($sport !== '') { $where[] = 'sports.name = ?'; $params[] = $sport; }
 if ($q !== '') { $where[] = 'master_people.name LIKE ?'; $params[] = "%{$q}%"; }
 
 $pdo = Database::connection();
-$statement = $pdo->prepare('SELECT master_people.*, sports.name AS sport_name FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE ' . implode(' AND ', $where) . ' ORDER BY sports.name, master_people.person_type, master_people.name');
-$statement->execute($params);
-$people = $statement->fetchAll();
-$sports = $pdo->query('SELECT name FROM sports WHERE is_active = 1 ORDER BY name')->fetchAll(PDO::FETCH_COLUMN);
-$counts = $pdo->query("SELECT COUNT(*) AS total, SUM(person_type = 'Atlet') AS athletes, SUM(person_type = 'Pelatih') AS coaches, MAX(synced_at) AS last_sync FROM master_people WHERE is_active = 1")->fetch();
+$people = [];
+$sports = [];
+$counts = ['total' => 0, 'athletes' => 0, 'coaches' => 0, 'last_sync' => null];
+try {
+    $statement = $pdo->prepare('SELECT master_people.*, sports.name AS sport_name FROM master_people JOIN sports ON sports.id = master_people.sport_id WHERE ' . implode(' AND ', $where) . ' ORDER BY sports.name, master_people.person_type, master_people.name');
+    $statement->execute($params);
+    $people = $statement->fetchAll();
+    $sports = $pdo->query('SELECT name FROM sports WHERE is_active = 1 ORDER BY name')->fetchAll(PDO::FETCH_COLUMN);
+    $counts = $pdo->query("SELECT COUNT(*) AS total, SUM(CASE WHEN person_type = 'Atlet' THEN 1 ELSE 0 END) AS athletes, SUM(CASE WHEN person_type = 'Pelatih' THEN 1 ELSE 0 END) AS coaches, MAX(synced_at) AS last_sync FROM master_people WHERE is_active = 1")->fetch() ?: $counts;
+} catch (Throwable $exception) {
+    error_log('[master-data] ' . $exception->getMessage());
+    flash('error', 'Master data belum dapat dimuat. Jalankan migrasi database terbaru, lalu muat ulang halaman.');
+}
 
 view('master-data', compact('people', 'sports', 'counts', 'type', 'sport', 'q') + ['pageTitle' => 'Master Atlet dan Pelatih']);
