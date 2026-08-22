@@ -46,18 +46,28 @@ if (request_method('POST')) {
     $primary = $duplicateRecords[0];
     $secondaryIds = array_values(array_diff($recordIds, [(int) $primary['id']]));
     $mergeFillFields = ['birth_place', 'birth_date', 'height_cm', 'weight_kg', 'bmi', 'test_place', 'notes'];
+    $identityMergeFields = ['birth_place', 'birth_date', 'height_cm', 'weight_kg'];
     $mergedPrimaryData = [];
+    $biodataConflicts = [];
     foreach ($mergeFillFields as $field) {
+        $filledValues = [];
+        foreach ($duplicateRecords as $candidate) {
+            $candidateValue = $candidate[$field] ?? null;
+            if ($candidateValue === null || trim((string) $candidateValue) === '') continue;
+            $normalizedValue = is_numeric($candidateValue) ? (string) (float) $candidateValue : strtolower(trim((string) $candidateValue));
+            $filledValues[$normalizedValue] = $candidateValue;
+        }
+        if (in_array($field, $identityMergeFields, true) && count($filledValues) > 1) {
+            $biodataConflicts[$field] = array_values($filledValues);
+        }
         $currentValue = $primary[$field] ?? null;
         $mergedPrimaryData[$field] = ($currentValue !== null && trim((string) $currentValue) !== '') ? $currentValue : null;
         if ($mergedPrimaryData[$field] !== null) continue;
-        foreach ($duplicateRecords as $candidate) {
-            $candidateValue = $candidate[$field] ?? null;
-            if ($candidateValue !== null && trim((string) $candidateValue) !== '') {
-                $mergedPrimaryData[$field] = $candidateValue;
-                break;
-            }
-        }
+        $mergedPrimaryData[$field] = $filledValues ? reset($filledValues) : null;
+    }
+    if ($biodataConflicts) {
+        flash('error', 'Data ganda belum digabungkan karena ada biodata yang berbeda: ' . implode(', ', array_keys($biodataConflicts)) . '. Periksa manual dulu agar data tidak salah gabung.');
+        redirect('analysis.php#data-ganda');
     }
     if (($mergedPrimaryData['bmi'] ?? null) === null && ($mergedPrimaryData['height_cm'] ?? null) !== null && ($mergedPrimaryData['weight_kg'] ?? null) !== null && (float) $mergedPrimaryData['height_cm'] > 0) {
         $heightM = (float) $mergedPrimaryData['height_cm'] / 100;
