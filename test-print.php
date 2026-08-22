@@ -24,6 +24,9 @@ if ($test['master_person_id']) {
 $photoStatement = $pdo->prepare('SELECT id, original_name FROM test_photos WHERE athlete_test_id = ? ORDER BY created_at, id');
 $photoStatement->execute([$id]);
 $photos = $photoStatement->fetchAll();
+$identityBirthText = ($test['birth_place'] || $test['birth_date'])
+    ? trim((string) ($test['birth_place'] ?: '-')) . ', ' . format_date($test['birth_date']) . ($test['birth_date'] ? ' (' . calculate_age($test['birth_date'], $test['test_date']) . ' Tahun)' : '')
+    : '-';
 $groups = [
     ['component' => 'KEKUATAN', 'codes' => ['sit_up', 'push_up', 'pull_up']],
     ['component' => 'POWER (Daya Ledak)', 'codes' => ['medicine_ball', 'vertical_jump']],
@@ -36,7 +39,7 @@ $groups = [
 <div class="print-toolbar"><button onclick="window.print()">Cetak / Simpan PDF</button><button onclick="window.close()">Tutup</button></div>
 <main class="print-sheet">
     <header class="print-header"><div class="print-logo"><img src="https://konisumbar.org/assets/img/logo_no_text.svg" alt="Logo KONI Sumatera Barat"></div><div><h1>BLANKO TES FISIK ATLET SUMBAR</h1><h2>TAHUN 2026</h2></div><div class="test-number"><?= e($test['test_number']) ?></div></header>
-    <section><h3>I. DATA DIRI</h3><table class="identity-table"><tr><td>Nama</td><td>: <?= e($test['athlete_name']) ?></td><td>Cabang Olahraga</td><td>: <?= e($test['sport']) ?></td></tr><tr><td>Tempat/Tgl. Lahir (Usia)</td><td>: <?= e($test['birth_place']) ?>, <?= e(format_date($test['birth_date'])) ?> (<?= e(calculate_age($test['birth_date'], $test['test_date'])) ?> Tahun)</td><td>Jenis Kelamin</td><td>: <?= $test['gender'] === 'L' ? 'Laki-Laki' : 'Perempuan' ?></td></tr><tr><td>Tinggi Badan</td><td>: <?= e($test['height_cm']) ?> cm</td><td>Berat Badan</td><td>: <?= e($test['weight_kg']) ?> kg</td></tr><tr><td>IMT</td><td>: <?= e($test['bmi']) ?></td><td>Tanggal Tes</td><td>: <?= e(format_date($test['test_date'])) ?></td></tr></table></section>
+    <section><h3>I. DATA DIRI</h3><table class="identity-table"><tr><td>Nama</td><td>: <?= e($test['athlete_name']) ?></td><td>Cabang Olahraga</td><td>: <?= e($test['sport']) ?></td></tr><tr><td>Tempat/Tgl. Lahir (Usia)</td><td>: <?= e($identityBirthText) ?></td><td>Jenis Kelamin</td><td>: <?= $test['gender'] === 'L' ? 'Laki-Laki' : 'Perempuan' ?></td></tr><tr><td>Tinggi Badan</td><td>: <?= e($test['height_cm'] ?: '-') ?> cm</td><td>Berat Badan</td><td>: <?= e($test['weight_kg'] ?: '-') ?> kg</td></tr><tr><td>IMT</td><td>: <?= e($test['bmi'] ?: '-') ?></td><td>Tanggal Tes</td><td>: <?= e(format_date($test['test_date'])) ?></td></tr></table></section>
     <section><h3>II. HASIL TES KONDISI FISIK</h3><table class="test-table"><thead><tr><th>No.</th><th>Komponen</th><th>Teknik Pengukuran</th><th>Skor</th><th>Kategori</th><th>Ket/Paraf</th></tr></thead><tbody>
     <?php foreach ($groups as $number => $group): ?>
         <tr class="component-heading-row">

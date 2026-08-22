@@ -23,12 +23,12 @@ if (request_method('POST')) {
     $height = nullable_number($_POST['height_cm'] ?? null);
     $weight = nullable_number($_POST['weight_kg'] ?? null);
     if ($masterPersonId < 1) { flash('error', 'Pilih atlet dari master data.'); redirect('test-edit.php?id=' . $id); }
-    if (trim((string) ($_POST['birth_place'] ?? '')) === '') { flash('error', 'Tempat lahir wajib diisi.'); redirect('test-edit.php?id=' . $id); }
-    if (trim((string) ($_POST['birth_date'] ?? '')) === '') { flash('error', 'Tanggal lahir wajib diisi.'); redirect('test-edit.php?id=' . $id); }
-    if (!$height || $height <= 0) { flash('error', 'Tinggi badan harus lebih dari 0 cm.'); redirect('test-edit.php?id=' . $id); }
-    if (!$weight || $weight <= 0) { flash('error', 'Berat badan harus lebih dari 0 kg.'); redirect('test-edit.php?id=' . $id); }
+    if ($height !== null && $height <= 0) { flash('error', 'Tinggi badan harus lebih dari 0 cm.'); redirect('test-edit.php?id=' . $id); }
+    if ($weight !== null && $weight <= 0) { flash('error', 'Berat badan harus lebih dari 0 kg.'); redirect('test-edit.php?id=' . $id); }
     if (trim((string) ($_POST['test_date'] ?? '')) === '') { flash('error', 'Tanggal tes wajib diisi.'); redirect('test-edit.php?id=' . $id); }
-    try { calculate_age($_POST['birth_date'], $_POST['test_date']); } catch (Throwable $exception) { flash('error', $exception->getMessage()); redirect('test-edit.php?id=' . $id); }
+    if (trim((string) ($_POST['birth_date'] ?? '')) !== '') {
+        try { calculate_age($_POST['birth_date'], $_POST['test_date']); } catch (Throwable $exception) { flash('error', $exception->getMessage()); redirect('test-edit.php?id=' . $id); }
+    }
 
     $pdo->beginTransaction();
     try {
@@ -38,10 +38,10 @@ if (request_method('POST')) {
         if (!$masterPerson) {
             throw new RuntimeException('Atlet harus dipilih dari master data aktif.');
         }
-        $bmi = round($weight / (($height / 100) ** 2), 2);
+        $bmi = ($height !== null && $weight !== null && $height > 0 && $weight > 0) ? round($weight / (($height / 100) ** 2), 2) : null;
         $update = $pdo->prepare('UPDATE athlete_tests SET master_person_id = ?, athlete_name = ?, birth_place = ?, birth_date = ?, sport = ?, gender = ?, height_cm = ?, weight_kg = ?, bmi = ?, test_date = ?, test_place = ?, notes = ? WHERE id = ?');
         $update->execute([
-            $masterPersonId, $masterPerson['name'], trim($_POST['birth_place']), $_POST['birth_date'], $masterPerson['sport'], $masterPerson['gender'], $height, $weight, $bmi,
+            $masterPersonId, $masterPerson['name'], trim((string) ($_POST['birth_place'] ?? '')) ?: null, trim((string) ($_POST['birth_date'] ?? '')) ?: null, $masterPerson['sport'], $masterPerson['gender'], $height, $weight, $bmi,
             $_POST['test_date'], trim($_POST['test_place'] ?? '') ?: 'Padang', trim($_POST['notes'] ?? '') ?: null, $id,
         ]);
         if (isset($_POST['results']) && is_array($_POST['results'])) {

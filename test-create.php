@@ -22,14 +22,14 @@ if (request_method('POST')) {
     $testPlace = trim((string) ($_POST['test_place'] ?? 'Padang'));
 
     if ($masterPersonId < 1) { flash('error', 'Pilih atlet dari master data.'); redirect('test-create.php'); }
-    if ($birthPlace === '') { flash('error', 'Tempat lahir wajib diisi.'); redirect('test-create.php'); }
-    if ($birthDate === '') { flash('error', 'Tanggal lahir wajib diisi.'); redirect('test-create.php'); }
-    if (!$height || $height <= 0) { flash('error', 'Tinggi badan harus lebih dari 0 cm.'); redirect('test-create.php'); }
-    if (!$weight || $weight <= 0) { flash('error', 'Berat badan harus lebih dari 0 kg.'); redirect('test-create.php'); }
-    if ($testDate === '') { flash('error', 'Tanggal tes wajib diisi.'); redirect('test-create.php'); }
-    try { calculate_age($birthDate, $testDate); } catch (Throwable $exception) { flash('error', $exception->getMessage()); redirect('test-create.php'); }
+    if ($height !== null && $height <= 0) { flash('error', 'Tinggi badan harus lebih dari 0 cm.'); redirect('test-create.php'); }
+    if ($weight !== null && $weight <= 0) { flash('error', 'Berat badan harus lebih dari 0 kg.'); redirect('test-create.php'); }
+    if ($testDate === '') { $testDate = date('Y-m-d'); }
+    if ($birthDate !== '') {
+        try { calculate_age($birthDate, $testDate); } catch (Throwable $exception) { flash('error', $exception->getMessage()); redirect('test-create.php'); }
+    }
 
-    $bmi = round($weight / (($height / 100) ** 2), 2);
+    $bmi = ($height !== null && $weight !== null && $height > 0 && $weight > 0) ? round($weight / (($height / 100) ** 2), 2) : null;
     $pdo = Database::connection();
     $pdo->beginTransaction();
     try {
@@ -47,7 +47,7 @@ if (request_method('POST')) {
         $statement = $pdo->prepare(
             'INSERT INTO athlete_tests (test_number, master_person_id, athlete_name, birth_place, birth_date, sport, gender, height_cm, weight_kg, bmi, test_date, test_place, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $statement->execute([$testNumber, $masterPersonId, $athleteName, $birthPlace, $birthDate, $sport, $gender, $height, $weight, $bmi, $testDate, $testPlace ?: 'Padang', trim((string) ($_POST['notes'] ?? '')) ?: null, Auth::user()['id']]);
+        $statement->execute([$testNumber, $masterPersonId, $athleteName, $birthPlace ?: null, $birthDate ?: null, $sport, $gender, $height, $weight, $bmi, $testDate, $testPlace ?: 'Padang', trim((string) ($_POST['notes'] ?? '')) ?: null, Auth::user()['id']]);
         $testId = (int) $pdo->lastInsertId();
 
         $resultStatement = $pdo->prepare('INSERT INTO test_results (athlete_test_id, test_code, result_value, unit, category, examiner_notes) VALUES (?, ?, ?, ?, ?, ?)');

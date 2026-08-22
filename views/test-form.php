@@ -27,10 +27,10 @@ $resultValue = static function (string $code, string $key) use ($results, $isEdi
             <label class="field"><span>Cabang Olahraga</span><input name="sport" value="<?= e($value('sport')) ?>" data-athlete-sport readonly></label>
             <label class="field"><span>Jenis Kelamin</span><input value="<?= $value('gender') === 'L' ? 'Laki-Laki' : ($value('gender') === 'P' ? 'Perempuan' : '') ?>" data-athlete-gender-label readonly><input type="hidden" name="gender" value="<?= e($value('gender')) ?>" data-athlete-gender></label>
             <label class="field"><span>Status Pembinaan</span><input value="" data-athlete-status readonly></label>
-            <label class="field"><span>Tempat Lahir *</span><input name="birth_place" value="<?= e($value('birth_place')) ?>" required></label>
-            <label class="field"><span>Tanggal Lahir *</span><input type="date" name="birth_date" value="<?= e($value('birth_date')) ?>" required></label>
-            <label class="field"><span>Tinggi Badan (cm) *</span><input type="number" name="height_cm" step="0.01" min="1" value="<?= e($value('height_cm')) ?>" data-height required></label>
-            <label class="field"><span>Berat Badan (kg) *</span><input type="number" name="weight_kg" step="0.01" min="1" value="<?= e($value('weight_kg')) ?>" data-weight required></label>
+            <label class="field"><span>Tempat Lahir</span><input name="birth_place" value="<?= e($value('birth_place')) ?>"></label>
+            <label class="field"><span>Tanggal Lahir</span><input type="date" name="birth_date" value="<?= e($value('birth_date')) ?>"></label>
+            <label class="field"><span>Tinggi Badan (cm)</span><input type="number" name="height_cm" step="0.01" min="1" value="<?= e($value('height_cm')) ?>" data-height></label>
+            <label class="field"><span>Berat Badan (kg)</span><input type="number" name="weight_kg" step="0.01" min="1" value="<?= e($value('weight_kg')) ?>" data-weight></label>
             <label class="field"><span>IMT (otomatis)</span><input value="<?= e($value('bmi')) ?>" data-bmi readonly placeholder="0.00"></label>
             <label class="field"><span>Tanggal Tes *</span><input type="date" name="test_date" value="<?= e($value('test_date', date('Y-m-d'))) ?>" required></label>
             <label class="field"><span>Tempat Tes</span><input name="test_place" value="<?= e($value('test_place', 'Padang')) ?>"></label>

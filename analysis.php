@@ -23,7 +23,7 @@ $categoryTotal = array_sum(array_map(static fn($row) => (int) $row['total'], $ca
 
 $bmiRows = $pdo->query(
     "SELECT CASE WHEN bmi < 18.5 THEN 'Kurus' WHEN bmi < 25 THEN 'Normal' WHEN bmi < 30 THEN 'Berlebih' ELSE 'Obesitas' END AS label, COUNT(*) AS total
-     FROM athlete_tests GROUP BY label ORDER BY FIELD(label, 'Kurus', 'Normal', 'Berlebih', 'Obesitas')"
+     FROM athlete_tests WHERE bmi IS NOT NULL GROUP BY label ORDER BY FIELD(label, 'Kurus', 'Normal', 'Berlebih', 'Obesitas')"
 )->fetchAll();
 $bmiTotal = array_sum(array_map(static fn($row) => (int) $row['total'], $bmiRows));
 

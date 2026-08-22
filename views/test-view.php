@@ -2,9 +2,10 @@
     <div><p class="eyebrow">DETAIL PENGUKURAN</p><h1><?= e($test['athlete_name']) ?></h1><p><?= e($test['test_number']) ?> · <?= e($test['sport']) ?></p></div>
     <div class="button-row"><?php if (in_array(Auth::user()['role'] ?? '', ['superadmin', 'input'], true)): ?><a class="btn btn-light" href="<?= e(base_url('test-edit.php?id=' . $test['id'])) ?>">Edit Data</a><?php endif; ?><a class="btn btn-primary" target="_blank" href="<?= e(base_url('test-print.php?id=' . $test['id'])) ?>">Cetak Blanko</a></div>
 </div>
+<?php $ageText = $test['birth_date'] ? calculate_age($test['birth_date'], $test['test_date']) . ' tahun' : 'Usia belum diisi'; ?>
 <section class="detail-hero">
-    <div class="detail-person"><div class="person-monogram"><?= e(strtoupper(substr($test['athlete_name'], 0, 1))) ?></div><div><span>ATLET</span><h2><?= e($test['athlete_name']) ?></h2><p><?= e($test['birth_place']) ?>, <?= e(format_date($test['birth_date'])) ?> · <?= e(calculate_age($test['birth_date'], $test['test_date'])) ?> tahun</p></div></div>
-    <div class="detail-metrics"><div><span>Tinggi</span><strong><?= e($test['height_cm']) ?><small> cm</small></strong></div><div><span>Berat</span><strong><?= e($test['weight_kg']) ?><small> kg</small></strong></div><div><span>IMT</span><strong><?= e($test['bmi']) ?></strong></div></div>
+    <div class="detail-person"><div class="person-monogram"><?= e(strtoupper(substr($test['athlete_name'], 0, 1))) ?></div><div><span>ATLET</span><h2><?= e($test['athlete_name']) ?></h2><p><?= e($test['birth_place'] ?: 'Tempat lahir belum diisi') ?>, <?= e(format_date($test['birth_date'])) ?> · <?= e($ageText) ?></p></div></div>
+    <div class="detail-metrics"><div><span>Tinggi</span><strong><?= e($test['height_cm'] ?: '-') ?><small> cm</small></strong></div><div><span>Berat</span><strong><?= e($test['weight_kg'] ?: '-') ?><small> kg</small></strong></div><div><span>IMT</span><strong><?= e($test['bmi'] ?: '-') ?></strong></div></div>
 </section>
 <?php if ($photos): ?>
 <section class="panel documentation-panel">

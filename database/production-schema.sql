@@ -63,13 +63,13 @@ CREATE TABLE athlete_tests (
     test_number VARCHAR(30) NOT NULL UNIQUE,
     master_person_id BIGINT UNSIGNED NULL,
     athlete_name VARCHAR(120) NOT NULL,
-    birth_place VARCHAR(100) NOT NULL,
-    birth_date DATE NOT NULL,
+    birth_place VARCHAR(100) NULL,
+    birth_date DATE NULL,
     sport VARCHAR(100) NOT NULL,
     gender ENUM('L', 'P') NOT NULL,
-    height_cm DECIMAL(6,2) NOT NULL,
-    weight_kg DECIMAL(6,2) NOT NULL,
-    bmi DECIMAL(5,2) NOT NULL,
+    height_cm DECIMAL(6,2) NULL,
+    weight_kg DECIMAL(6,2) NULL,
+    bmi DECIMAL(5,2) NULL,
     test_date DATE NOT NULL,
     test_place VARCHAR(100) NOT NULL DEFAULT 'Padang',
     notes TEXT NULL,
@@ -209,6 +209,7 @@ INSERT INTO migrations (migration) VALUES
     ('013_add_station_audit_module.sql'),
     ('014_create_test_settings.sql'),
     ('015_add_master_people_source.sql'),
-    ('016_add_master_data_audit_module.sql');
+    ('016_add_master_data_audit_module.sql'),
+    ('017_make_athlete_test_details_optional.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;
