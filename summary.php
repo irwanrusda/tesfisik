@@ -37,8 +37,59 @@ $sportRows = $pdo->query(
      FROM sports s
      JOIN master_people mp ON mp.sport_id = s.id AND mp.person_type = 'Atlet' AND mp.is_active = 1
      GROUP BY s.id, s.name
-     ORDER BY total DESC, s.name"
+     ORDER BY (SUM(EXISTS (SELECT 1 FROM athlete_tests at2 WHERE at2.master_person_id = mp.id)) / NULLIF(COUNT(mp.id), 0)) DESC,
+              SUM(EXISTS (SELECT 1 FROM athlete_tests at3 WHERE at3.master_person_id = mp.id)) DESC,
+              COUNT(mp.id) DESC,
+              s.name"
 )->fetchAll();
+
+$stationDefinitions = physical_test_items();
+$stationResultRows = $pdo->query(
+    "SELECT at.sport, tr.test_code, COUNT(DISTINCT at.master_person_id) AS tested
+     FROM test_results tr
+     JOIN athlete_tests at ON at.id = tr.athlete_test_id
+     WHERE tr.result_value IS NOT NULL AND at.master_person_id IS NOT NULL
+     GROUP BY at.sport, tr.test_code"
+)->fetchAll();
+$stationResultsBySport = [];
+foreach ($stationResultRows as $row) {
+    $stationResultsBySport[$row['sport']][$row['test_code']] = (int) $row['tested'];
+}
+$stationCoverageRows = [];
+foreach ($sportRows as $sportRow) {
+    $totalAthletes = (int) $sportRow['total'];
+    $completedStations = 0;
+    $notStartedStations = [];
+    $incompleteStations = [];
+    foreach ($stationDefinitions as $code => $definition) {
+        $tested = (int) ($stationResultsBySport[$sportRow['name']][$code] ?? 0);
+        if ($tested >= $totalAthletes && $totalAthletes > 0) {
+            $completedStations++;
+        } elseif ($tested === 0) {
+            $notStartedStations[] = $definition['method'];
+        } else {
+            $incompleteStations[] = [
+                'method' => $definition['method'],
+                'tested' => $tested,
+                'total' => $totalAthletes,
+            ];
+        }
+    }
+    $stationCoverageRows[] = [
+        'sport' => $sportRow['name'],
+        'athletes' => $totalAthletes,
+        'completed' => $completedStations,
+        'total_stations' => count($stationDefinitions),
+        'coverage' => count($stationDefinitions) > 0 ? round($completedStations / count($stationDefinitions) * 100, 1) : 0,
+        'not_started' => $notStartedStations,
+        'incomplete' => $incompleteStations,
+    ];
+}
+usort($stationCoverageRows, static function (array $left, array $right): int {
+    return $left['coverage'] <=> $right['coverage']
+        ?: count($right['not_started']) <=> count($left['not_started'])
+        ?: strcmp($left['sport'], $right['sport']);
+});
 
 $notTested = $pdo->query(
     "SELECT mp.name, mp.gender, mp.development_status, s.name AS sport
@@ -82,4 +133,4 @@ $bleepSportRows = $pdo->query(
      ORDER BY tested DESC, athletes DESC, s.name"
 )->fetchAll();
 
-view('summary', compact('overview', 'statusRows', 'sportRows', 'notTested', 'bleepOverview', 'bleepStatusRows', 'bleepSportRows') + ['pageTitle' => 'Summary Atlet']);
+view('summary', compact('overview', 'statusRows', 'sportRows', 'stationCoverageRows', 'notTested', 'bleepOverview', 'bleepStatusRows', 'bleepSportRows') + ['pageTitle' => 'Summary Atlet']);

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/app/bootstrap.php';
-Auth::requireAnyRole(['superadmin', 'input']);
+Auth::requireAnyRole(['superadmin', 'panitia', 'input']);
 
 $pdo = Database::connection();
 $protocol = bleep_test_protocol();

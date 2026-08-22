@@ -39,7 +39,7 @@ $role = $user['role'] ?? '';
                     <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Analisis
                 </a>
             <?php endif; ?>
-            <?php if (in_array($role, ['superadmin', 'input'], true)): ?>
+            <?php if (in_array($role, ['superadmin', 'panitia', 'input'], true)): ?>
                 <?php $inputMenuOpen = in_array($currentPage, ['test-create.php', 'test-edit.php', 'test-station.php', 'bleep-test.php'], true); ?>
                 <div class="nav-accordion <?= $inputMenuOpen ? 'open' : '' ?>" data-nav-accordion>
                     <button class="nav-item nav-accordion-trigger <?= $inputMenuOpen ? 'active' : '' ?>" type="button" data-nav-accordion-trigger aria-expanded="<?= $inputMenuOpen ? 'true' : 'false' ?>">

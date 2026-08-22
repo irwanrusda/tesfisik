@@ -66,6 +66,21 @@ $participation = $total > 0 ? round($tested / $total * 100, 1) : 0;
     <?php foreach ($sportRows as $row): $sportTotal = (int) $row['total']; $sportTested = (int) $row['tested']; $rate = $sportTotal ? round($sportTested / $sportTotal * 100, 1) : 0; ?><tr><td><strong><?= e($row['name']) ?></strong></td><td><?= e($sportTotal) ?></td><td><?= e((int) $row['male']) ?></td><td><?= e((int) $row['female']) ?></td><td><?= e($sportTested) ?></td><td><?= e($sportTotal - $sportTested) ?></td><td><div class="table-progress"><span style="width:<?= e($rate) ?>%"></span></div><small><?= e($rate) ?>%</small></td></tr><?php endforeach; ?>
     </tbody></table></div>
 </section>
+
+<section class="panel summary-table-panel station-coverage-panel">
+    <div class="panel-header"><div><p class="eyebrow">KELENGKAPAN POS PER CABOR</p><h2>Pos yang Belum Diikuti</h2><p>Setiap pos dinyatakan lengkap jika seluruh atlet aktif pada cabor tersebut sudah memiliki nilai.</p></div><span class="count-badge"><?= e(count($stationCoverageRows)) ?> cabor</span></div>
+    <div class="table-wrap"><table class="station-coverage-table"><thead><tr><th>Cabang Olahraga</th><th>Atlet</th><th>Pos Lengkap</th><th>Cakupan</th><th>Belum Diikuti</th><th>Belum Lengkap</th></tr></thead><tbody>
+    <?php if (!$stationCoverageRows): ?><tr><td colspan="6" class="empty-state">Belum ada data cabor aktif.</td></tr><?php endif; ?>
+    <?php foreach ($stationCoverageRows as $row): ?><tr>
+        <td><strong><?= e($row['sport']) ?></strong></td>
+        <td><?= e($row['athletes']) ?></td>
+        <td><strong><?= e($row['completed']) ?>/<?= e($row['total_stations']) ?></strong></td>
+        <td><div class="table-progress"><span style="width:<?= e($row['coverage']) ?>%"></span></div><small><?= e($row['coverage']) ?>%</small></td>
+        <td class="station-gap-cell"><?php if ($row['not_started']): ?><?php foreach ($row['not_started'] as $method): ?><span class="station-gap missing"><?= e($method) ?></span><?php endforeach; ?><?php else: ?><span class="station-complete"><i class="fa-solid fa-check"></i> Semua pos sudah diikuti</span><?php endif; ?></td>
+        <td class="station-gap-cell"><?php if ($row['incomplete']): ?><?php foreach ($row['incomplete'] as $station): ?><span class="station-gap partial"><?= e($station['method']) ?> <small><?= e($station['tested']) ?>/<?= e($station['total']) ?> atlet</small></span><?php endforeach; ?><?php else: ?><span class="station-complete"><i class="fa-solid fa-check"></i> Tidak ada</span><?php endif; ?></td>
+    </tr><?php endforeach; ?>
+    </tbody></table></div>
+</section>
 </div>
 
 <section class="panel summary-table-panel">

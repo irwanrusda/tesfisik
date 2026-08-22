@@ -1,6 +1,6 @@
 <div class="page-heading">
     <div><p class="eyebrow">ARSIP PENGUKURAN</p><h1>Laporan Tes Fisik</h1><p>Cari, periksa, dan cetak hasil tes atlet.</p></div>
-    <?php if (in_array(Auth::user()['role'] ?? '', ['superadmin', 'input'], true)): ?><a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a><?php endif; ?>
+    <?php if (in_array(Auth::user()['role'] ?? '', ['superadmin', 'panitia', 'input'], true)): ?><a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a><?php endif; ?>
 </div>
 <section class="panel filter-panel">
     <form method="get" class="filter-grid">
