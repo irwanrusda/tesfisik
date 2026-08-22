@@ -5,11 +5,6 @@ declare(strict_types=1);
 require __DIR__ . '/app/bootstrap.php';
 Auth::requireAnyRole(['superadmin', 'panitia', 'input']);
 
-if (!class_exists(ZipArchive::class)) {
-    http_response_code(503);
-    exit('Ekstensi PHP ZipArchive belum aktif di server.');
-}
-
 $pdo = Database::connection();
 $sport = trim((string) ($_GET['sport'] ?? ''));
 $from = (string) ($_GET['from'] ?? '');
@@ -80,60 +75,42 @@ foreach ($bleepTests as $index => $test) {
     ];
 }
 
-function xlsx_column(int $number): string
-{
-    $column = '';
-    while ($number > 0) {
-        $number--;
-        $column = chr(65 + ($number % 26)) . $column;
-        $number = intdiv($number, 26);
-    }
-    return $column;
-}
-
-function xlsx_xml(mixed $value): string
+function excel_xml(mixed $value): string
 {
     return htmlspecialchars((string) $value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
 }
 
-function xlsx_sheet(array $rows): string
+function excel_cell(mixed $value, bool $header = false): string
 {
-    $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-    $xml .= '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetData>';
-    foreach ($rows as $rowIndex => $row) {
-        $excelRow = $rowIndex + 1;
-        $xml .= '<row r="' . $excelRow . '">';
-        foreach (array_values($row) as $columnIndex => $value) {
-            $reference = xlsx_column($columnIndex + 1) . $excelRow;
-            $style = $excelRow === 1 ? ' s="1"' : '';
-            if (is_int($value) || is_float($value)) {
-                $xml .= '<c r="' . $reference . '"' . $style . '><v>' . $value . '</v></c>';
-            } else {
-                $xml .= '<c r="' . $reference . '" t="inlineStr"' . $style . '><is><t xml:space="preserve">' . xlsx_xml($value) . '</t></is></c>';
-            }
-        }
-        $xml .= '</row>';
-    }
-    $lastColumn = xlsx_column(max(1, count($rows[0] ?? [])));
-    return $xml . '</sheetData><autoFilter ref="A1:' . $lastColumn . '1"/></worksheet>';
+    $type = is_int($value) || is_float($value) ? 'Number' : 'String';
+    $style = $header ? ' ss:StyleID="Header"' : '';
+    return '<Cell' . $style . '><Data ss:Type="' . $type . '">' . excel_xml($value) . '</Data></Cell>';
 }
 
-$temporaryFile = tempnam(sys_get_temp_dir(), 'koni-xlsx-');
-if ($temporaryFile === false) throw new RuntimeException('File sementara Excel gagal dibuat.');
-$zip = new ZipArchive();
-if ($zip->open($temporaryFile, ZipArchive::OVERWRITE) !== true) throw new RuntimeException('Arsip Excel gagal dibuat.');
-$zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
-$zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
-$zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Hasil Tes Fisik" sheetId="1" r:id="rId1"/><sheet name="Hasil VO2max" sheetId="2" r:id="rId2"/></sheets></workbook>');
-$zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
-$zip->addFromString('xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font/><font><b/><color rgb="FFFFFFFF"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF101D32"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs></styleSheet>');
-$zip->addFromString('xl/worksheets/sheet1.xml', xlsx_sheet($physicalRows));
-$zip->addFromString('xl/worksheets/sheet2.xml', xlsx_sheet($bleepRows));
-$zip->close();
+function excel_worksheet(string $name, array $rows): string
+{
+    $xml = '<Worksheet ss:Name="' . excel_xml($name) . '"><Table>';
+    foreach ($rows as $rowIndex => $row) {
+        $xml .= '<Row>';
+        foreach (array_values($row) as $value) {
+            $xml .= excel_cell($value, $rowIndex === 0);
+        }
+        $xml .= '</Row>';
+    }
+    return $xml . '</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>1</SplitHorizontal><TopRowBottomPane>1</TopRowBottomPane><ActivePane>2</ActivePane><ProtectObjects>False</ProtectObjects><ProtectScenarios>False</ProtectScenarios></WorksheetOptions></Worksheet>';
+}
 
-$filename = 'hasil-tes-fisik-koni-sumbar-' . date('Ymd-His') . '.xlsx';
-header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+$workbook = '<?xml version="1.0" encoding="UTF-8"?>';
+$workbook .= '<?mso-application progid="Excel.Sheet"?>';
+$workbook .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+$workbook .= '<DocumentProperties xmlns="urn:schemas-microsoft-com:office:office"><Author>Bidang Digitalisasi KONI Sumbar</Author><Created>' . gmdate('Y-m-d\TH:i:s\Z') . '</Created></DocumentProperties>';
+$workbook .= '<Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Bottom"/><Font ss:FontName="Arial" ss:Size="10"/></Style><Style ss:ID="Header"><Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#101D32" ss:Pattern="Solid"/></Style></Styles>';
+$workbook .= excel_worksheet('Hasil Tes Fisik', $physicalRows);
+$workbook .= excel_worksheet('Hasil VO2max', $bleepRows);
+$workbook .= '</Workbook>';
+
+$filename = 'hasil-tes-fisik-koni-sumbar-' . date('Ymd-His') . '.xls';
+header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 header('Cache-Control: max-age=0, no-store');
-readfile($temporaryFile);
-unlink($temporaryFile);
+echo $workbook;
