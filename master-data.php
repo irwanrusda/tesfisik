@@ -10,6 +10,7 @@ if (request_method('POST')) {
     $action = (string) ($_POST['action'] ?? 'sync');
     if ($action === 'add_athlete') {
         Auth::requireAnyRole(['superadmin', 'input']);
+        require_crud_open();
     } else {
         Auth::requireRole('superadmin');
     }

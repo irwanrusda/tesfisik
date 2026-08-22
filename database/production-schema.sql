@@ -179,6 +179,24 @@ CREATE TABLE test_settings (
     CONSTRAINT fk_test_settings_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE duplicate_resolutions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fingerprint CHAR(64) NOT NULL UNIQUE,
+    athlete_key CHAR(64) NOT NULL,
+    decision ENUM('separate', 'merged') NOT NULL,
+    record_ids TEXT NOT NULL,
+    resolved_by BIGINT UNSIGNED NULL,
+    resolved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_duplicate_resolutions_user FOREIGN KEY (resolved_by) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+    INDEX idx_duplicate_resolutions_athlete (athlete_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO test_settings (setting_key, setting_value) VALUES
+    ('sit_up_duration_seconds', '60'),
+    ('push_up_duration_seconds', '60'),
+    ('female_pull_up_mode', 'repetitions'),
+    ('crud_locked', '0');
+
 CREATE TABLE migrations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     migration VARCHAR(255) NOT NULL UNIQUE,
@@ -210,6 +228,8 @@ INSERT INTO migrations (migration) VALUES
     ('014_create_test_settings.sql'),
     ('015_add_master_people_source.sql'),
     ('016_add_master_data_audit_module.sql'),
-    ('017_make_athlete_test_details_optional.sql');
+    ('017_make_athlete_test_details_optional.sql'),
+    ('018_add_crud_lock_setting.sql'),
+    ('019_create_duplicate_resolutions.sql');
 
 SET FOREIGN_KEY_CHECKS = 1;

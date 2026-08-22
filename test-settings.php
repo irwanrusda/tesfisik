@@ -8,6 +8,15 @@ Auth::requireRole('superadmin');
 $pdo = Database::connection();
 if (request_method('POST')) {
     verify_csrf();
+    $action = (string) ($_POST['action'] ?? 'conditions');
+    if ($action === 'crud_lock') {
+        $locked = isset($_POST['crud_locked']) ? '1' : '0';
+        $statement = $pdo->prepare('INSERT INTO test_settings (setting_key, setting_value, updated_by) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_by = VALUES(updated_by)');
+        $statement->execute(['crud_locked', $locked, Auth::user()['id']]);
+        flash('success', $locked === '1' ? 'CRUD berhasil ditutup untuk seluruh user selain superadmin.' : 'CRUD berhasil dibuka kembali.');
+        redirect('test-settings.php');
+    }
+
     $sitUpDuration = (int) ($_POST['sit_up_duration_seconds'] ?? 0);
     $pushUpDuration = (int) ($_POST['push_up_duration_seconds'] ?? 0);
     $femalePullUpMode = (string) ($_POST['female_pull_up_mode'] ?? '');
@@ -34,4 +43,5 @@ if (request_method('POST')) {
 }
 
 $conditions = test_conditions($pdo);
-view('test-settings', compact('conditions') + ['pageTitle' => 'Konfigurasi Tes']);
+$crudLocked = crud_is_locked($pdo);
+view('test-settings', compact('conditions', 'crudLocked') + ['pageTitle' => 'Konfigurasi Tes']);

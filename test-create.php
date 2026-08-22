@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/app/bootstrap.php';
 Auth::requireAnyRole(['superadmin', 'panitia', 'input']);
+require_crud_open();
 
 if (request_method('POST')) {
     verify_csrf();

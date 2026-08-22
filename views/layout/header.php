@@ -3,6 +3,7 @@ $currentPage = basename($_SERVER['PHP_SELF'] ?? '');
 $pageTitle = $pageTitle ?? config('app.name');
 $user = Auth::user();
 $role = $user['role'] ?? '';
+$crudLockedForUser = $role !== 'superadmin' && crud_is_locked();
 ?>
 <!doctype html>
 <html lang="id">
@@ -39,7 +40,7 @@ $role = $user['role'] ?? '';
                     <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Analisis
                 </a>
             <?php endif; ?>
-            <?php if (in_array($role, ['superadmin', 'panitia', 'input'], true)): ?>
+            <?php if (in_array($role, ['superadmin', 'panitia', 'input'], true) && !$crudLockedForUser): ?>
                 <?php $inputMenuOpen = in_array($currentPage, ['test-create.php', 'test-edit.php', 'test-station.php', 'bleep-test.php'], true); ?>
                 <div class="nav-accordion <?= $inputMenuOpen ? 'open' : '' ?>" data-nav-accordion>
                     <button class="nav-item nav-accordion-trigger <?= $inputMenuOpen ? 'active' : '' ?>" type="button" data-nav-accordion-trigger aria-expanded="<?= $inputMenuOpen ? 'true' : 'false' ?>">
@@ -95,8 +96,9 @@ $role = $user['role'] ?? '';
         <header class="topbar">
             <button class="menu-toggle" id="menuToggle" type="button" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
             <div><p class="topbar-date"><?= e(date('l, d F Y')) ?></p></div>
-            <div class="topbar-badge">KONI SUMBAR <span>2026</span></div>
+            <div class="topbar-actions"><?php if ($crudLockedForUser): ?><span class="crud-locked-badge"><i class="fa-solid fa-lock"></i> Entri Ditutup</span><?php endif; ?><div class="topbar-badge">KONI SUMBAR <span>2026</span></div></div>
         </header>
         <main class="content">
             <?php if ($message = flash('success')): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?>
             <?php if ($message = flash('error')): ?><div class="alert alert-danger"><?= e($message) ?></div><?php endif; ?>
+            <?php if ($crudLockedForUser): ?><div class="alert alert-warning"><i class="fa-solid fa-lock"></i> Entri, edit, dan hapus data sedang ditutup oleh superadmin. Anda tetap dapat melihat laporan, summary, dan analisis.</div><?php endif; ?>

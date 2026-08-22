@@ -6,11 +6,11 @@ $oldValue = function (string $key, $default = '') {
 <div class="page-heading">
     <div><p class="eyebrow">SUMBER GOOGLE SHEET & WEBSITE</p><h1>Master Atlet & Pelatih</h1><p>Daftar resmi nama, cabor, prestasi, dan status pembinaan.</p></div>
     <?php $currentRole = Auth::user()['role'] ?? ''; ?>
-    <?php if (in_array($currentRole, ['superadmin', 'input'], true)): ?>
+    <?php if (in_array($currentRole, ['superadmin', 'input'], true) && !crud_locked_for_current_user()): ?>
         <div class="button-row"><a class="btn btn-primary" href="#tambah-atlet"><i class="fa-solid fa-user-plus"></i> Tambah Atlet</a><?php if ($currentRole === 'superadmin'): ?><form method="post" data-confirm="Ambil ulang data dari Google Sheet? Data atlet yang ditambahkan dari website tetap dipertahankan."><?= csrf_field() ?><input type="hidden" name="action" value="sync"><button class="btn btn-light" type="submit">Sinkronkan Google Sheet</button></form><?php endif; ?></div>
     <?php endif; ?>
 </div>
-<?php if (in_array($currentRole, ['superadmin', 'input'], true)): ?>
+<?php if (in_array($currentRole, ['superadmin', 'input'], true) && !crud_locked_for_current_user()): ?>
 <section class="panel add-athlete-panel" id="tambah-atlet">
     <div class="panel-header"><div><p class="eyebrow">INPUT DATA</p><h2>Tambah Atlet ke Master Data</h2><p>Data akan disimpan di database website dan langsung tersedia di aplikasi. Setelah itu Bang Irwan bisa copy manual ke spreadsheet.</p></div><span class="count-badge"><i class="fa-solid fa-database"></i> Website</span></div>
     <form method="post" class="add-athlete-form">

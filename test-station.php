@@ -27,6 +27,7 @@ $q = trim((string) ($_GET['q'] ?? ''));
 $categories = ['Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Sangat Kurang'];
 
 if (request_method('POST')) {
+    require_crud_open($pdo);
     verify_csrf();
     $athleteTestId = (int) ($_POST['athlete_test_id'] ?? 0);
     $value = nullable_number($_POST['result_value'] ?? null);

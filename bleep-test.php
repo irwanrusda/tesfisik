@@ -16,6 +16,7 @@ if (isset($_GET['edit'])) {
 }
 
 if (request_method('POST')) {
+    require_crud_open($pdo);
     verify_csrf();
     $action = (string) ($_POST['action'] ?? 'save');
     if ($action === 'delete') {
@@ -94,5 +95,6 @@ $athletes = $pdo->query("SELECT mp.id, mp.name, mp.gender, mp.development_status
     WHERE mp.person_type = 'Atlet' AND mp.is_active = 1
     ORDER BY s.name, mp.name")->fetchAll();
 $history = $pdo->query('SELECT bt.*, u.name AS officer_name FROM bleep_tests bt JOIN users u ON u.id = bt.created_by ORDER BY bt.test_date DESC, bt.id DESC LIMIT 100')->fetchAll();
+$crudLocked = crud_locked_for_current_user($pdo);
 
-view('bleep-test', compact('protocol', 'athletes', 'history', 'editing') + ['pageTitle' => 'Bleep Test VO2max']);
+view('bleep-test', compact('protocol', 'athletes', 'history', 'editing', 'crudLocked') + ['pageTitle' => 'Bleep Test VO2max']);

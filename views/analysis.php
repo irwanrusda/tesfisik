@@ -76,6 +76,29 @@
         </tbody></table></div>
     </div>
 </section>
+
+<section class="panel duplicate-panel" id="data-ganda">
+    <div class="panel-header"><div><p class="eyebrow">KUALITAS DATA</p><h2>Kemungkinan Data Atlet Ganda</h2><p>Kandidat ditentukan dari kombinasi nama, cabang olahraga, dan jenis kelamin yang sama.</p></div><span class="count-badge"><?= e(count($duplicateGroups)) ?> kandidat</span></div>
+    <div class="duplicate-groups">
+        <?php if (!$duplicateGroups): ?><p class="empty-state">Tidak ada kandidat data atlet ganda yang belum diputuskan.</p><?php endif; ?>
+        <?php foreach ($duplicateGroups as $group): $firstRecord = $group['records'][0]; ?>
+            <article class="duplicate-card">
+                <div class="duplicate-card-header"><div><span class="duplicate-alert-icon"><i class="fa-solid fa-clone"></i></span><div><strong><?= e($firstRecord['athlete_name']) ?></strong><small><?= e($firstRecord['sport']) ?> · <?= e($firstRecord['gender'] === 'L' ? 'Laki-Laki' : 'Perempuan') ?> · <?= e(count($group['records'])) ?> data</small></div></div><?php if ((Auth::user()['role'] ?? '') === 'superadmin'): ?><div class="action-row"><form method="post" data-confirm="Pertahankan data ini sebagai pendaftaran yang berbeda?"><?= csrf_field() ?><input type="hidden" name="duplicate_action" value="separate"><input type="hidden" name="record_ids" value="<?= e(implode(',', $group['record_ids'])) ?>"><button class="btn btn-small btn-light" type="submit">Tetap Pisah</button></form><form method="post" data-confirm="Gabungkan seluruh data, nilai pos, Bleep Test, dan dokumentasi ke satu data utama? Data duplikat akan dihapus permanen."><?= csrf_field() ?><input type="hidden" name="duplicate_action" value="merge"><input type="hidden" name="record_ids" value="<?= e(implode(',', $group['record_ids'])) ?>"><button class="btn btn-small btn-danger" type="submit">Gabungkan Data</button></form></div><?php endif; ?></div>
+                <div class="duplicate-records">
+                    <?php foreach ($group['records'] as $record): ?>
+                        <div class="duplicate-record">
+                            <div class="duplicate-record-title"><span class="code-pill"><?= e($record['test_number']) ?></span><span><?= e(format_date($record['test_date'])) ?></span><small>Input: <?= e($record['creator_name']) ?></small></div>
+                            <div class="duplicate-results">
+                                <?php if (empty($group['results'][$record['id']])): ?><span class="duplicate-empty">Belum ada nilai pos</span><?php endif; ?>
+                                <?php foreach ($group['results'][$record['id']] ?? [] as $result): $definition = $testItems[$result['test_code']] ?? ['method' => $result['test_code']]; ?><span><b><?= e($definition['method']) ?></b><?= e($result['result_value']) ?> <?= e($result['unit']) ?></span><?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </div>
+</section>
 </div>
 
 <section class="analytics-grid recommendation-grid">

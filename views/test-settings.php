@@ -1,8 +1,20 @@
 <div class="page-heading">
     <div><p class="eyebrow">SUPERADMIN</p><h1>Konfigurasi Kondisi Tes</h1><p>Tetapkan durasi tes dan metode Pull Up perempuan yang digunakan petugas pos.</p></div>
 </div>
+<section class="panel crud-lock-panel <?= $crudLocked ? 'locked' : 'open' ?>">
+    <div class="crud-lock-copy">
+        <span class="crud-lock-icon"><i class="fa-solid <?= $crudLocked ? 'fa-lock' : 'fa-lock-open' ?>"></i></span>
+        <div><p class="eyebrow">KONTROL AKSES GLOBAL</p><h2><?= $crudLocked ? 'CRUD Sedang Ditutup' : 'CRUD Sedang Dibuka' ?></h2><p><?= $crudLocked ? 'Akun input dan panitia tidak dapat menambah, mengedit, atau menghapus data. Superadmin tetap memiliki akses penuh.' : 'Akun sesuai hak aksesnya dapat melakukan entri dan edit data seperti biasa.' ?></p></div>
+    </div>
+    <form method="post" data-confirm="<?= $crudLocked ? 'Buka kembali akses entri dan edit untuk user lain?' : 'Tutup seluruh akses entri, edit, dan hapus untuk user selain superadmin?' ?>">
+        <?= csrf_field() ?><input type="hidden" name="action" value="crud_lock">
+        <label class="crud-lock-switch"><input type="checkbox" name="crud_locked" value="1" <?= $crudLocked ? 'checked' : '' ?>><span></span><b><?= $crudLocked ? 'Terkunci' : 'Terbuka' ?></b></label>
+        <button class="btn <?= $crudLocked ? 'btn-light' : 'btn-danger' ?>" type="submit"><?= $crudLocked ? 'Buka CRUD' : 'Tutup CRUD' ?></button>
+    </form>
+</section>
 <form method="post" class="settings-layout">
     <?= csrf_field() ?>
+    <input type="hidden" name="action" value="conditions">
     <section class="panel settings-panel">
         <div class="panel-header"><div><p class="eyebrow">KEKUATAN</p><h2>Sit Up dan Push Up</h2></div></div>
         <div class="settings-fields">

@@ -1,7 +1,7 @@
 <div data-auto-refresh="30000" data-preserve-station-forms data-refresh-page="station">
 <div class="page-heading station-heading">
     <div><p class="eyebrow">POS INPUT TES</p><h1><?= e($item['method']) ?></h1><p><?= e($item['component']) ?><?= $item['detail'] !== '' ? ' · ' . e($item['detail']) : '' ?>. Petugas pos cukup pilih atlet yang menunggu, isi skor, lalu simpan.</p></div>
-    <a class="btn btn-light station-register-button" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a>
+    <?php if (!crud_locked_for_current_user()): ?><a class="btn btn-light station-register-button" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a><?php endif; ?>
 </div>
 <section class="station-current panel">
     <div class="station-current-main">
@@ -45,7 +45,7 @@
                     <span class="station-status-pill <?= $row['result_value'] === null ? 'waiting' : 'done' ?>"><?= $row['result_value'] === null ? 'Menunggu' : 'Selesai' ?></span>
                     <i class="fa-solid fa-chevron-down station-expand-icon"></i>
                 </button>
-                <form class="station-score-form" method="post" enctype="multipart/form-data">
+                <?php if (!crud_locked_for_current_user()): ?><form class="station-score-form" method="post" enctype="multipart/form-data">
                     <?= csrf_field() ?>
                     <input type="hidden" name="test_code" value="<?= e($code) ?>">
                     <input type="hidden" name="date" value="<?= e($date) ?>">
@@ -62,7 +62,7 @@
                         <?php if ($row['station_photos']): ?><div class="station-photo-list"><?php foreach ($row['station_photos'] as $photo): ?><a href="<?= e(signed_photo_url((int) $photo['id'])) ?>" target="_blank"><img src="<?= e(signed_photo_url((int) $photo['id'])) ?>" alt="<?= e($photo['original_name']) ?>" loading="lazy"><span><?= e($photo['original_name']) ?></span></a><?php endforeach; ?></div><?php endif; ?>
                     </div>
                     <button class="btn btn-primary" type="submit">Simpan</button>
-                </form>
+                </form><?php endif; ?>
             </article>
         <?php endforeach; ?>
     </div>

@@ -7,6 +7,122 @@ Auth::requireAnyRole(['superadmin', 'panitia']);
 
 $pdo = Database::connection();
 $testItems = physical_test_items();
+
+if (request_method('POST')) {
+    Auth::requireRole('superadmin');
+    verify_csrf();
+    $duplicateAction = (string) ($_POST['duplicate_action'] ?? '');
+    $recordIds = array_values(array_unique(array_filter(array_map('intval', explode(',', (string) ($_POST['record_ids'] ?? ''))))));
+    sort($recordIds);
+    if (count($recordIds) < 2 || !in_array($duplicateAction, ['merge', 'separate'], true)) {
+        flash('error', 'Kandidat data ganda tidak valid.');
+        redirect('analysis.php#data-ganda');
+    }
+
+    $placeholders = implode(',', array_fill(0, count($recordIds), '?'));
+    $recordStatement = $pdo->prepare("SELECT at.*, (SELECT COUNT(*) FROM test_results tr WHERE tr.athlete_test_id = at.id AND tr.result_value IS NOT NULL) AS filled_results FROM athlete_tests at WHERE at.id IN ({$placeholders}) ORDER BY filled_results DESC, at.id ASC");
+    $recordStatement->execute($recordIds);
+    $duplicateRecords = $recordStatement->fetchAll();
+    if (count($duplicateRecords) !== count($recordIds)) {
+        flash('error', 'Sebagian data kandidat sudah berubah atau tidak ditemukan.');
+        redirect('analysis.php#data-ganda');
+    }
+    $identityKeys = array_unique(array_map(static fn(array $row): string => hash('sha256', strtolower(trim($row['athlete_name'])) . '|' . strtolower(trim($row['sport'])) . '|' . $row['gender']), $duplicateRecords));
+    if (count($identityKeys) !== 1) {
+        flash('error', 'Data yang dipilih tidak memiliki kombinasi nama, cabor, dan jenis kelamin yang sama.');
+        redirect('analysis.php#data-ganda');
+    }
+    $athleteKey = $identityKeys[0];
+    $fingerprint = hash('sha256', implode(',', $recordIds));
+
+    if ($duplicateAction === 'separate') {
+        $resolution = $pdo->prepare("INSERT INTO duplicate_resolutions (fingerprint, athlete_key, decision, record_ids, resolved_by) VALUES (?, ?, 'separate', ?, ?) ON DUPLICATE KEY UPDATE decision = VALUES(decision), resolved_by = VALUES(resolved_by), resolved_at = CURRENT_TIMESTAMP");
+        $resolution->execute([$fingerprint, $athleteKey, implode(',', $recordIds), Auth::user()['id']]);
+        write_audit_log($pdo, 'update', 'tes_fisik', ['id' => $recordIds[0], 'athlete_name' => $duplicateRecords[0]['athlete_name'], 'sport' => $duplicateRecords[0]['sport']], ['keputusan_duplikasi' => 'tetap_dipisah', 'record_ids' => $recordIds]);
+        flash('success', 'Data ditandai sebagai atlet yang sengaja dipisah dan tidak akan muncul lagi selama susunan datanya tidak berubah.');
+        redirect('analysis.php#data-ganda');
+    }
+
+    $primary = $duplicateRecords[0];
+    $secondaryIds = array_values(array_diff($recordIds, [(int) $primary['id']]));
+    $conflicts = [];
+    $pdo->beginTransaction();
+    try {
+        foreach ($secondaryIds as $secondaryId) {
+            $resultsStatement = $pdo->prepare('SELECT * FROM test_results WHERE athlete_test_id = ? ORDER BY updated_at DESC, id DESC');
+            $resultsStatement->execute([$secondaryId]);
+            foreach ($resultsStatement->fetchAll() as $result) {
+                $existingStatement = $pdo->prepare('SELECT * FROM test_results WHERE athlete_test_id = ? AND test_code = ? LIMIT 1');
+                $existingStatement->execute([$primary['id'], $result['test_code']]);
+                $existing = $existingStatement->fetch();
+                if (!$existing) {
+                    $move = $pdo->prepare('UPDATE test_results SET athlete_test_id = ? WHERE id = ?');
+                    $move->execute([$primary['id'], $result['id']]);
+                    continue;
+                }
+                $useSecondary = $existing['result_value'] === null || ($result['result_value'] !== null && strtotime($result['updated_at']) > strtotime($existing['updated_at']));
+                if ($existing['result_value'] !== null && $result['result_value'] !== null && (float) $existing['result_value'] !== (float) $result['result_value']) {
+                    $conflicts[] = ['test_code' => $result['test_code'], 'dipertahankan' => $useSecondary ? $result['result_value'] : $existing['result_value'], 'diabaikan' => $useSecondary ? $existing['result_value'] : $result['result_value']];
+                }
+                if ($useSecondary) {
+                    $replace = $pdo->prepare('UPDATE test_results SET result_value = ?, unit = ?, category = ?, examiner_notes = ?, updated_at = ? WHERE id = ?');
+                    $replace->execute([$result['result_value'], $result['unit'], $result['category'], $result['examiner_notes'], $result['updated_at'], $existing['id']]);
+                }
+                $deleteResult = $pdo->prepare('DELETE FROM test_results WHERE id = ?');
+                $deleteResult->execute([$result['id']]);
+            }
+
+            $movePhotos = $pdo->prepare('UPDATE test_photos SET athlete_test_id = ? WHERE athlete_test_id = ?');
+            $movePhotos->execute([$primary['id'], $secondaryId]);
+        }
+
+        $masterPersonIds = array_values(array_unique(array_filter(array_map(static fn(array $row): int => (int) ($row['master_person_id'] ?? 0), $duplicateRecords))));
+        if ($masterPersonIds) {
+            $primaryMasterId = (int) ($primary['master_person_id'] ?: $masterPersonIds[0]);
+            $masterPlaceholders = implode(',', array_fill(0, count($masterPersonIds), '?'));
+            $updateBleep = $pdo->prepare("UPDATE bleep_tests SET master_person_id = ? WHERE master_person_id IN ({$masterPlaceholders})");
+            $updateBleep->execute(array_merge([$primaryMasterId], $masterPersonIds));
+            $updatePrimary = $pdo->prepare('UPDATE athlete_tests SET master_person_id = ? WHERE id = ?');
+            $updatePrimary->execute([$primaryMasterId, $primary['id']]);
+        }
+
+        foreach ($secondaryIds as $secondaryId) {
+            $clearMasterReference = $pdo->prepare('UPDATE athlete_tests SET master_person_id = NULL WHERE id = ?');
+            $clearMasterReference->execute([$secondaryId]);
+            $deleteRecord = $pdo->prepare('DELETE FROM athlete_tests WHERE id = ?');
+            $deleteRecord->execute([$secondaryId]);
+        }
+        $resolution = $pdo->prepare("INSERT INTO duplicate_resolutions (fingerprint, athlete_key, decision, record_ids, resolved_by) VALUES (?, ?, 'merged', ?, ?) ON DUPLICATE KEY UPDATE decision = VALUES(decision), resolved_by = VALUES(resolved_by), resolved_at = CURRENT_TIMESTAMP");
+        $resolution->execute([$fingerprint, $athleteKey, implode(',', $recordIds), Auth::user()['id']]);
+        write_audit_log($pdo, 'update', 'tes_fisik', ['id' => $primary['id'], 'number' => $primary['test_number'], 'athlete_name' => $primary['athlete_name'], 'sport' => $primary['sport']], ['penggabungan_data' => $recordIds, 'konflik_nilai' => $conflicts]);
+        $pdo->commit();
+        flash('success', 'Data ganda berhasil digabungkan. Seluruh nilai pos dan dokumentasi telah dipindahkan ke satu data utama.');
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        flash('error', 'Data ganda gagal digabungkan: ' . $exception->getMessage());
+    }
+    redirect('analysis.php#data-ganda');
+}
+
+$duplicateGroups = [];
+$duplicateGroupRows = $pdo->query("SELECT LOWER(TRIM(athlete_name)) AS normalized_name, LOWER(TRIM(sport)) AS normalized_sport, gender, COUNT(*) AS total, GROUP_CONCAT(id ORDER BY id) AS record_ids FROM athlete_tests GROUP BY LOWER(TRIM(athlete_name)), LOWER(TRIM(sport)), gender HAVING COUNT(*) > 1 ORDER BY total DESC, normalized_name")->fetchAll();
+foreach ($duplicateGroupRows as $group) {
+    $ids = array_map('intval', explode(',', $group['record_ids']));
+    sort($ids);
+    $fingerprint = hash('sha256', implode(',', $ids));
+    $resolutionStatement = $pdo->prepare("SELECT decision FROM duplicate_resolutions WHERE fingerprint = ? AND decision = 'separate' LIMIT 1");
+    $resolutionStatement->execute([$fingerprint]);
+    if ($resolutionStatement->fetchColumn()) continue;
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $detailStatement = $pdo->prepare("SELECT at.id, at.test_number, at.athlete_name, at.sport, at.gender, at.birth_date, at.test_date, at.created_at, u.name AS creator_name FROM athlete_tests at JOIN users u ON u.id = at.created_by WHERE at.id IN ({$placeholders}) ORDER BY at.id");
+    $detailStatement->execute($ids);
+    $records = $detailStatement->fetchAll();
+    $resultStatement = $pdo->prepare("SELECT tr.athlete_test_id, tr.test_code, tr.result_value, tr.unit, tr.category, tr.updated_at FROM test_results tr WHERE tr.athlete_test_id IN ({$placeholders}) AND tr.result_value IS NOT NULL ORDER BY tr.test_code, tr.updated_at DESC");
+    $resultStatement->execute($ids);
+    $results = [];
+    foreach ($resultStatement->fetchAll() as $result) $results[$result['athlete_test_id']][] = $result;
+    $duplicateGroups[] = ['record_ids' => $ids, 'records' => $records, 'results' => $results];
+}
 $rankingCode = (string) ($_GET['ranking_test'] ?? 'sit_up');
 if (!isset($testItems[$rankingCode])) $rankingCode = 'sit_up';
 $rankingDefinition = $testItems[$rankingCode];
@@ -81,4 +197,4 @@ if ($testCount === 0) {
 }
 if (!$recommendations) $recommendations[] = ['title' => 'Kualitas data baik', 'text' => 'Data cukup lengkap. Lanjutkan pemantauan berkala dan bandingkan tren per atlet serta cabang olahraga.'];
 
-view('analysis', compact('testItems', 'rankingCode', 'rankingDefinition', 'rankingDirection', 'rankingRows', 'testCount', 'testedAthletes', 'retestedAthletes', 'completeness', 'categoryRows', 'categoryTotal', 'bmiRows', 'bmiTotal', 'averages', 'vo2maxSummary', 'bleepOverview', 'bleepCategoryRows', 'bleepCategoryTotal', 'bleepSportAnalysis', 'bleepTopAthletes', 'coverageRows', 'recommendations') + ['pageTitle' => 'Analisis Tes']);
+view('analysis', compact('testItems', 'duplicateGroups', 'rankingCode', 'rankingDefinition', 'rankingDirection', 'rankingRows', 'testCount', 'testedAthletes', 'retestedAthletes', 'completeness', 'categoryRows', 'categoryTotal', 'bmiRows', 'bmiTotal', 'averages', 'vo2maxSummary', 'bleepOverview', 'bleepCategoryRows', 'bleepCategoryTotal', 'bleepSportAnalysis', 'bleepTopAthletes', 'coverageRows', 'recommendations') + ['pageTitle' => 'Analisis Tes']);

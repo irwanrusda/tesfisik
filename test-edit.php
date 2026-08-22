@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/app/bootstrap.php';
 Auth::requireAnyRole(['superadmin', 'panitia', 'input']);
+require_crud_open();
 
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $pdo = Database::connection();

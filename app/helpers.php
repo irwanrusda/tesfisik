@@ -205,6 +205,33 @@ function physical_test_input_definition(string $code, string $gender, ?array $co
     return $definition;
 }
 
+function crud_is_locked(?PDO $pdo = null): bool
+{
+    try {
+        $pdo ??= Database::connection();
+        $statement = $pdo->prepare("SELECT setting_value FROM test_settings WHERE setting_key = 'crud_locked' LIMIT 1");
+        $statement->execute();
+        return $statement->fetchColumn() === '1';
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+function crud_locked_for_current_user(?PDO $pdo = null): bool
+{
+    return (Auth::user()['role'] ?? '') !== 'superadmin' && crud_is_locked($pdo);
+}
+
+function require_crud_open(?PDO $pdo = null): void
+{
+    if (!crud_locked_for_current_user($pdo)) {
+        return;
+    }
+
+    flash('error', 'Entri, edit, dan hapus data sedang ditutup oleh superadmin.');
+    redirect('reports.php');
+}
+
 function calculate_age(string $birthDate, ?string $atDate = null): int
 {
     $birth = new DateTimeImmutable($birthDate);
