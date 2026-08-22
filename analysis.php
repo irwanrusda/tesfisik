@@ -45,6 +45,24 @@ if (request_method('POST')) {
 
     $primary = $duplicateRecords[0];
     $secondaryIds = array_values(array_diff($recordIds, [(int) $primary['id']]));
+    $mergeFillFields = ['birth_place', 'birth_date', 'height_cm', 'weight_kg', 'bmi', 'test_place', 'notes'];
+    $mergedPrimaryData = [];
+    foreach ($mergeFillFields as $field) {
+        $currentValue = $primary[$field] ?? null;
+        $mergedPrimaryData[$field] = ($currentValue !== null && trim((string) $currentValue) !== '') ? $currentValue : null;
+        if ($mergedPrimaryData[$field] !== null) continue;
+        foreach ($duplicateRecords as $candidate) {
+            $candidateValue = $candidate[$field] ?? null;
+            if ($candidateValue !== null && trim((string) $candidateValue) !== '') {
+                $mergedPrimaryData[$field] = $candidateValue;
+                break;
+            }
+        }
+    }
+    if (($mergedPrimaryData['bmi'] ?? null) === null && ($mergedPrimaryData['height_cm'] ?? null) !== null && ($mergedPrimaryData['weight_kg'] ?? null) !== null && (float) $mergedPrimaryData['height_cm'] > 0) {
+        $heightM = (float) $mergedPrimaryData['height_cm'] / 100;
+        $mergedPrimaryData['bmi'] = round((float) $mergedPrimaryData['weight_kg'] / ($heightM * $heightM), 2);
+    }
     $conflicts = [];
     $pdo->beginTransaction();
     try {
@@ -86,6 +104,18 @@ if (request_method('POST')) {
             $updatePrimary->execute([$primaryMasterId, $primary['id']]);
         }
 
+        $updatePrimaryData = $pdo->prepare('UPDATE athlete_tests SET birth_place = ?, birth_date = ?, height_cm = ?, weight_kg = ?, bmi = ?, test_place = ?, notes = ? WHERE id = ?');
+        $updatePrimaryData->execute([
+            $mergedPrimaryData['birth_place'],
+            $mergedPrimaryData['birth_date'],
+            $mergedPrimaryData['height_cm'],
+            $mergedPrimaryData['weight_kg'],
+            $mergedPrimaryData['bmi'],
+            $mergedPrimaryData['test_place'] ?: $primary['test_place'],
+            $mergedPrimaryData['notes'],
+            $primary['id'],
+        ]);
+
         foreach ($secondaryIds as $secondaryId) {
             $clearMasterReference = $pdo->prepare('UPDATE athlete_tests SET master_person_id = NULL WHERE id = ?');
             $clearMasterReference->execute([$secondaryId]);
@@ -96,7 +126,7 @@ if (request_method('POST')) {
         $resolution->execute([$fingerprint, $athleteKey, implode(',', $recordIds), Auth::user()['id']]);
         write_audit_log($pdo, 'update', 'tes_fisik', ['id' => $primary['id'], 'number' => $primary['test_number'], 'athlete_name' => $primary['athlete_name'], 'sport' => $primary['sport']], ['penggabungan_data' => $recordIds, 'konflik_nilai' => $conflicts]);
         $pdo->commit();
-        flash('success', 'Data ganda berhasil digabungkan. Seluruh nilai pos dan dokumentasi telah dipindahkan ke satu data utama.');
+        flash('success', 'Data ganda berhasil digabungkan. Biodata, nilai pos, Bleep Test, dan dokumentasi telah dipindahkan ke satu data utama.');
     } catch (Throwable $exception) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         flash('error', 'Data ganda gagal digabungkan: ' . $exception->getMessage());
