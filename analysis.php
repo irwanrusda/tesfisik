@@ -6,6 +6,22 @@ require __DIR__ . '/app/bootstrap.php';
 Auth::requireAnyRole(['superadmin', 'panitia']);
 
 $pdo = Database::connection();
+$testItems = physical_test_items();
+$rankingCode = (string) ($_GET['ranking_test'] ?? 'sit_up');
+if (!isset($testItems[$rankingCode])) $rankingCode = 'sit_up';
+$rankingDefinition = $testItems[$rankingCode];
+$rankingDirection = in_array($rankingCode, ['sprint_30m', 'illinois'], true) ? 'ASC' : 'DESC';
+$rankingStatement = $pdo->prepare(
+    "SELECT tr.result_value, tr.unit, tr.category, at.athlete_name, at.sport, at.gender, at.test_date, u.name AS officer_name
+     FROM test_results tr
+     JOIN athlete_tests at ON at.id = tr.athlete_test_id
+     JOIN users u ON u.id = at.created_by
+     WHERE tr.test_code = ? AND tr.result_value IS NOT NULL
+     ORDER BY tr.result_value {$rankingDirection}, at.test_date DESC, at.athlete_name
+     LIMIT 100"
+);
+$rankingStatement->execute([$rankingCode]);
+$rankingRows = $rankingStatement->fetchAll();
 $testCount = (int) $pdo->query('SELECT COUNT(*) FROM athlete_tests')->fetchColumn();
 $testedAthletes = (int) $pdo->query('SELECT COUNT(DISTINCT master_person_id) FROM athlete_tests WHERE master_person_id IS NOT NULL')->fetchColumn();
 $retestedAthletes = (int) $pdo->query('SELECT COUNT(*) FROM (SELECT master_person_id FROM athlete_tests WHERE master_person_id IS NOT NULL GROUP BY master_person_id HAVING COUNT(*) > 1) repeated')->fetchColumn();
@@ -65,4 +81,4 @@ if ($testCount === 0) {
 }
 if (!$recommendations) $recommendations[] = ['title' => 'Kualitas data baik', 'text' => 'Data cukup lengkap. Lanjutkan pemantauan berkala dan bandingkan tren per atlet serta cabang olahraga.'];
 
-view('analysis', compact('testCount', 'testedAthletes', 'retestedAthletes', 'completeness', 'categoryRows', 'categoryTotal', 'bmiRows', 'bmiTotal', 'averages', 'vo2maxSummary', 'bleepOverview', 'bleepCategoryRows', 'bleepCategoryTotal', 'bleepSportAnalysis', 'bleepTopAthletes', 'coverageRows', 'recommendations') + ['pageTitle' => 'Analisis Tes']);
+view('analysis', compact('testItems', 'rankingCode', 'rankingDefinition', 'rankingDirection', 'rankingRows', 'testCount', 'testedAthletes', 'retestedAthletes', 'completeness', 'categoryRows', 'categoryTotal', 'bmiRows', 'bmiTotal', 'averages', 'vo2maxSummary', 'bleepOverview', 'bleepCategoryRows', 'bleepCategoryTotal', 'bleepSportAnalysis', 'bleepTopAthletes', 'coverageRows', 'recommendations') + ['pageTitle' => 'Analisis Tes']);

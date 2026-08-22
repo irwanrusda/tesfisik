@@ -183,6 +183,39 @@ masterFilter?.addEventListener('submit', (event) => {
     runMasterSearch();
 });
 
+const rankingFilter = document.querySelector('[data-ranking-filter]');
+const rankingSelect = document.querySelector('[data-ranking-select]');
+let rankingController;
+
+async function updateRankingTable() {
+    if (!rankingFilter || !rankingSelect) return;
+    rankingController?.abort();
+    rankingController = new AbortController();
+    const url = new URL(window.location.href);
+    url.searchParams.set('ranking_test', rankingSelect.value);
+    const currentResults = document.querySelector('[data-ranking-results]');
+    currentResults?.classList.add('is-loading');
+    try {
+        const response = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store', signal: rankingController.signal });
+        if (!response.ok) return;
+        const documentCopy = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const updatedResults = documentCopy.querySelector('[data-ranking-results]');
+        if (!updatedResults || !currentResults) return;
+        currentResults.replaceWith(updatedResults);
+        window.history.replaceState({}, '', url);
+    } catch (error) {
+        if (error.name !== 'AbortError') console.error('Peringkat tes gagal dimuat', error);
+    } finally {
+        document.querySelector('[data-ranking-results]')?.classList.remove('is-loading');
+    }
+}
+
+rankingSelect?.addEventListener('change', updateRankingTable);
+rankingFilter?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    updateRankingTable();
+});
+
 const autoRefresh = document.querySelector('[data-auto-refresh]');
 if (autoRefresh) {
     const interval = Number(autoRefresh.dataset.autoRefresh) || 30000;

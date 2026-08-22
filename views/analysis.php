@@ -65,6 +65,17 @@
         <?php endforeach; ?>
     </div>
 </section>
+
+<section class="panel ranking-panel">
+    <div class="panel-header ranking-header"><div><p class="eyebrow">URUTAN NILAI TES</p><h2>Peringkat Atlet per Komponen</h2><p>Pilih kategori tes untuk melihat urutan hasil atlet.</p></div><form method="get" class="ranking-filter" data-ranking-filter><label class="field"><span>Komponen Tes</span><select name="ranking_test" data-ranking-select><?php foreach ($testItems as $code => $definition): ?><option value="<?= e($code) ?>" <?= $rankingCode === $code ? 'selected' : '' ?>><?= e($definition['method'] . ' · ' . $definition['component']) ?></option><?php endforeach; ?></select></label></form></div>
+    <div data-ranking-results>
+        <div class="ranking-summary"><div><span>Komponen</span><strong><?= e($rankingDefinition['method']) ?></strong><small><?= e($rankingDefinition['component']) ?></small></div><div><span>Satuan</span><strong><?= e($rankingDefinition['unit']) ?></strong><small><?= $rankingDirection === 'ASC' ? 'Nilai terendah terbaik' : 'Nilai tertinggi terbaik' ?></small></div><div><span>Jumlah Hasil</span><strong><?= e(count($rankingRows)) ?></strong><small>Maksimal 100 hasil</small></div></div>
+        <div class="table-wrap"><table class="ranking-table"><thead><tr><th>Peringkat</th><th>Atlet</th><th>Cabor</th><th>L/P</th><th>Nilai</th><th>Kategori</th><th>Tanggal</th><th>Petugas</th></tr></thead><tbody>
+        <?php if (!$rankingRows): ?><tr><td colspan="8" class="empty-state">Belum ada nilai untuk komponen ini.</td></tr><?php endif; ?>
+        <?php foreach ($rankingRows as $index => $row): ?><tr><td><span class="ranking-number <?= $index < 3 ? 'top' : '' ?>"><?= e($index + 1) ?></span></td><td><strong><?= e($row['athlete_name']) ?></strong></td><td><?= e($row['sport']) ?></td><td><?= e($row['gender']) ?></td><td><strong class="ranking-score"><?= e($row['result_value']) ?></strong> <small><?= e($row['unit']) ?></small></td><td><?= e($row['category'] ?: '-') ?></td><td><?= e(format_date($row['test_date'])) ?></td><td><?= e($row['officer_name']) ?></td></tr><?php endforeach; ?>
+        </tbody></table></div>
+    </div>
+</section>
 </div>
 
 <section class="analytics-grid recommendation-grid">
