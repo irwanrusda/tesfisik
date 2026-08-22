@@ -34,9 +34,10 @@ $bleepTests = $bleepStatement->fetchAll();
 
 $items = physical_test_items();
 $headers = ['No', 'Nama', 'Jenis Kelamin', 'Tempat/Tanggal Lahir', 'Cabang Olahraga', 'Tanggal Tes'];
-foreach ($items as $definition) {
-    $headers[] = $definition['method'] . ' - Hasil';
-    $headers[] = $definition['method'] . ' - Indikator 80%';
+foreach ($items as $code => $definition) {
+    $headerUnit = $code === 'pull_up' ? 'kali/detik' : $definition['unit'];
+    $headers[] = $definition['method'] . ' - Hasil (' . $headerUnit . ')';
+    $headers[] = $definition['method'] . ' - Indikator 80% (' . $headerUnit . ')';
     $headers[] = $definition['method'] . ' - Status';
 }
 $physicalRows = [$headers];
@@ -46,14 +47,14 @@ foreach ($tests as $index => $test) {
     foreach ($items as $code => $definition) {
         $result = $resultsByTest[$test['id']][$code] ?? null;
         $indicator = physical_test_indicator($test['sport'], $test['gender'], $code, $result['result_value'] ?? null);
-        $row[] = $result ? $result['result_value'] . ' ' . $result['unit'] : '';
-        $row[] = $indicator['available'] ? $indicator['operator'] . ' ' . $indicator['threshold'] . ' ' . $definition['unit'] : 'Belum tersedia';
-        $row[] = $indicator['label'];
+        $row[] = $result && $result['result_value'] !== null ? (float) $result['result_value'] : '';
+        $row[] = $indicator['available'] ? $indicator['operator'] . ' ' . $indicator['threshold'] : '-';
+        $row[] = $indicator['available'] ? $indicator['label'] : '-';
     }
     $physicalRows[] = $row;
 }
 
-$bleepHeaders = ['No', 'Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'Cabang Olahraga', 'Tanggal Tes', 'Level', 'Shuttle', 'Total Shuttle', 'Jarak (m)', 'Kecepatan (km/jam)', 'VO2max', 'Indikator 80%', 'Status'];
+$bleepHeaders = ['No', 'Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'Cabang Olahraga', 'Tanggal Tes', 'Level', 'Shuttle', 'Total Shuttle (balikan)', 'Jarak (m)', 'Kecepatan (km/jam)', 'VO2max (ml/kg/menit)', 'Indikator 80% (ml/kg/menit)', 'Status'];
 $bleepRows = [$bleepHeaders];
 foreach ($bleepTests as $index => $test) {
     $indicator = physical_test_indicator($test['sport'], $test['gender'], 'bleep_test', $test['vo2max']);
@@ -70,8 +71,8 @@ foreach ($bleepTests as $index => $test) {
         $test['distance_m'],
         $test['speed_kmh'],
         $test['vo2max'],
-        $indicator['available'] ? $indicator['operator'] . ' ' . $indicator['threshold'] . ' ml/kg/menit' : 'Belum tersedia',
-        $indicator['label'],
+        $indicator['available'] ? $indicator['operator'] . ' ' . $indicator['threshold'] : '-',
+        $indicator['available'] ? $indicator['label'] : '-',
     ];
 }
 
