@@ -6,9 +6,13 @@ require __DIR__ . '/app/bootstrap.php';
 Auth::requireAnyRole(['superadmin', 'panitia', 'input']);
 
 if (request_method('POST')) {
-    Auth::requireRole('superadmin');
     verify_csrf();
     $action = (string) ($_POST['action'] ?? 'sync');
+    if ($action === 'add_athlete') {
+        Auth::requireAnyRole(['superadmin', 'input']);
+    } else {
+        Auth::requireRole('superadmin');
+    }
     try {
         if ($action === 'add_athlete') {
             function_exists('set_old') ? set_old($_POST) : $_SESSION['_old'] = $_POST;
