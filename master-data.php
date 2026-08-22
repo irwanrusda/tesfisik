@@ -13,7 +13,12 @@ if (request_method('POST')) {
         if ($action === 'add_athlete') {
             function_exists('set_old') ? set_old($_POST) : $_SESSION['_old'] = $_POST;
             $athlete = MasterDataSync::addAthlete($_POST);
-            write_audit_log(Database::connection(), 'create', 'master_data', ['id' => $athlete['id'], 'athlete_name' => $athlete['name'], 'sport' => $athlete['sport']], ['source' => 'website']);
+            try {
+                write_audit_log(Database::connection(), 'create', 'master_data', ['id' => $athlete['id'], 'athlete_name' => $athlete['name'], 'sport' => $athlete['sport']], ['source' => 'website']);
+            } catch (Throwable) {
+                // Audit master_data membutuhkan migrasi enum terbaru. Jangan gagalkan tambah atlet
+                // bila file sudah terdeploy tetapi migrasi belum sempat berjalan.
+            }
             function_exists('clear_old') ? clear_old() : unset($_SESSION['_old']);
             flash('success', "Atlet {$athlete['name']} berhasil ditambahkan ke database website. Silakan copy manual ke spreadsheet bila diperlukan.");
         } else {
