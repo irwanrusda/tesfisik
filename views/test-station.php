@@ -53,6 +53,7 @@
                     <input type="hidden" name="q" value="<?= e($q) ?>">
                     <input type="hidden" name="athlete_test_id" value="<?= e($row['id']) ?>">
                     <label class="field compact"><span><?= e($rowDefinition['method']) ?> (<?= e($rowDefinition['unit']) ?>) *</span><input type="number" step="0.01" min="0" name="result_value" value="<?= e($row['result_value'] ?? '') ?>" required></label>
+                    <div class="station-indicator <?= $row['indicator']['met'] === true ? 'met' : ($row['indicator']['met'] === false ? 'unmet' : '') ?>"><span>Indikator 80%</span><?php if ($row['indicator']['available']): ?><strong><?= e($row['indicator']['operator']) ?> <?= e($row['indicator']['threshold']) ?> <?= e($rowDefinition['unit']) ?></strong><small><?= e($row['indicator']['label']) ?></small><?php else: ?><strong>Belum tersedia</strong><small>Tidak ada padanan standar untuk cabor/tes ini.</small><?php endif; ?></div>
                     <label class="field compact station-category-field"><span>Kategori</span><select name="category"><option value="">Pilih kategori</option><?php foreach ($categories as $category): ?><option value="<?= e($category) ?>" <?= $row['category'] === $category ? 'selected' : '' ?>><?= e($category) ?></option><?php endforeach; ?></select></label>
                     <label class="field compact"><span>Ket/Paraf</span><input name="examiner_notes" value="<?= e($row['examiner_notes'] ?? '') ?>" placeholder="Opsional"></label>
                     <div class="station-documentation">

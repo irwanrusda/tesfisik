@@ -40,19 +40,19 @@ $groups = [
 <main class="print-sheet">
     <header class="print-header"><div class="print-logo"><img src="https://konisumbar.org/assets/img/logo_no_text.svg" alt="Logo KONI Sumatera Barat"></div><div><h1>BLANKO TES FISIK ATLET SUMBAR</h1><h2>TAHUN 2026</h2></div><div class="test-number"><?= e($test['test_number']) ?></div></header>
     <section><h3>I. DATA DIRI</h3><table class="identity-table"><tr><td>Nama</td><td>: <?= e($test['athlete_name']) ?></td><td>Cabang Olahraga</td><td>: <?= e($test['sport']) ?></td></tr><tr><td>Tempat/Tgl. Lahir (Usia)</td><td>: <?= e($identityBirthText) ?></td><td>Jenis Kelamin</td><td>: <?= $test['gender'] === 'L' ? 'Laki-Laki' : 'Perempuan' ?></td></tr><tr><td>Tinggi Badan</td><td>: <?= e($test['height_cm'] ?: '-') ?> cm</td><td>Berat Badan</td><td>: <?= e($test['weight_kg'] ?: '-') ?> kg</td></tr><tr><td>IMT</td><td>: <?= e($test['bmi'] ?: '-') ?></td><td>Tanggal Tes</td><td>: <?= e(format_date($test['test_date'])) ?></td></tr></table></section>
-    <section><h3>II. HASIL TES KONDISI FISIK</h3><table class="test-table"><thead><tr><th>No.</th><th>Komponen</th><th>Teknik Pengukuran</th><th>Skor</th><th>Kategori</th><th>Ket/Paraf</th></tr></thead><tbody>
+    <section><h3>II. HASIL TES KONDISI FISIK</h3><table class="test-table"><thead><tr><th>No.</th><th>Komponen</th><th>Teknik Pengukuran</th><th>Skor</th><th>Indikator 80%</th><th>Ket/Paraf</th></tr></thead><tbody>
     <?php foreach ($groups as $number => $group): ?>
         <tr class="component-heading-row">
             <td rowspan="<?= e(count($group['codes']) + 1) ?>"><?= e($number + 1) ?></td>
             <td><strong><?= e($group['component']) ?></strong></td>
             <td colspan="4"></td>
         </tr>
-        <?php foreach ($group['codes'] as $code): $definition = physical_test_input_definition($code, $test['gender']); $result = $results[$code] ?? []; ?>
+        <?php foreach ($group['codes'] as $code): $definition = physical_test_input_definition($code, $test['gender']); $result = $results[$code] ?? []; $indicator = physical_test_indicator($test['sport'], $test['gender'], $code, $result['result_value'] ?? null); ?>
         <tr class="measurement-detail-row">
             <td><?= e($definition['detail'] ?: $definition['method']) ?></td>
             <td><?= e($definition['method']) ?></td>
             <td><span class="score-cell"><span><?= e($result['result_value'] ?? '') ?></span><small><?= e($definition['unit']) ?></small></span></td>
-            <td><?= e($result['category'] ?? '') ?></td>
+            <td><?= $indicator['available'] ? e($indicator['operator'] . ' ' . $indicator['threshold'] . ' - ' . $indicator['label']) : 'Belum tersedia' ?></td>
             <td><?= e($result['examiner_notes'] ?? '') ?></td>
         </tr>
         <?php endforeach; ?>
@@ -66,7 +66,8 @@ $groups = [
             <td><?= $bleepTest ? 'Level ' . e($bleepTest['level']) . ' / Shuttle ' . e($bleepTest['shuttle']) : 'Estimasi VO2max' ?></td>
             <td>Bleep Test 20 Meter<?= $bleepTest ? '<br><small>' . e(format_date($bleepTest['test_date'])) . '</small>' : '' ?></td>
             <td><span class="score-cell"><span><?= e($bleepTest['vo2max'] ?? '') ?></span><small>ml/kg/menit</small></span></td>
-            <td><?= e($bleepTest['category'] ?? '') ?></td>
+            <?php $bleepIndicator = physical_test_indicator($test['sport'], $test['gender'], 'bleep_test', $bleepTest['vo2max'] ?? null); ?>
+            <td><?= $bleepIndicator['available'] ? e($bleepIndicator['operator'] . ' ' . $bleepIndicator['threshold'] . ' - ' . $bleepIndicator['label']) : 'Belum tersedia' ?></td>
             <td><?= e($bleepTest['notes'] ?? '') ?></td>
         </tr>
     </tbody></table></section>

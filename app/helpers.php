@@ -205,6 +205,86 @@ function physical_test_input_definition(string $code, string $gender, ?array $co
     return $definition;
 }
 
+function physical_test_standard_map(): array
+{
+    return [
+        'ANGKAT BESI' => [
+            'L' => ['sit_reach' => [25.0, 'min'], 'push_up' => [64, 'min'], 'sit_up' => [94, 'min'], 'medicine_ball' => [816, 'min'], 'vertical_jump' => [64, 'min']],
+            'P' => ['sit_reach' => [27.0, 'min'], 'push_up' => [50, 'min'], 'sit_up' => [77, 'min'], 'medicine_ball' => [624, 'min'], 'vertical_jump' => [52, 'min']],
+        ],
+        'ATLETIK' => [
+            'L' => ['sit_reach' => [24.49, 'min'], 'push_up' => [60, 'min'], 'sit_up' => [88, 'min'], 'sprint_30m' => [3.60, 'max'], 'bleep_test' => [52.0, 'min']],
+            'P' => ['sit_reach' => [25.70, 'min'], 'push_up' => [40, 'min'], 'sit_up' => [72, 'min'], 'sprint_30m' => [3.84, 'max'], 'bleep_test' => [44.25, 'min']],
+        ],
+        'BALAP SEPEDA' => [
+            'L' => ['sit_reach' => [24.5, 'min'], 'vertical_jump' => [64, 'min']],
+            'P' => ['sit_reach' => [25.7, 'min'], 'vertical_jump' => [52, 'min']],
+        ],
+        'BULUTANGKIS' => [
+            'L' => ['sit_reach' => [24.49, 'min'], 'vertical_jump' => [64, 'min'], 'sit_up' => [48, 'min'], 'bleep_test' => [52, 'min']],
+            'P' => ['sit_reach' => [25.70, 'min'], 'vertical_jump' => [52, 'min'], 'sit_up' => [32, 'min'], 'bleep_test' => [44, 'min']],
+        ],
+        'KARATE' => [
+            'L' => ['sit_reach' => [25.6, 'min'], 'push_up' => [60, 'min'], 'sit_up' => [88, 'min'], 'vertical_jump' => [64, 'min'], 'medicine_ball' => [608, 'min'], 'bleep_test' => [52, 'min']],
+            'P' => ['sit_reach' => [30.4, 'min'], 'push_up' => [40, 'min'], 'sit_up' => [72, 'min'], 'vertical_jump' => [52, 'min'], 'medicine_ball' => [568, 'min'], 'bleep_test' => [44, 'min']],
+        ],
+        'MENEMBAK' => [
+            'L' => ['sit_reach' => [24.5, 'min'], 'push_up' => [48, 'min']],
+            'P' => ['sit_reach' => [25.7, 'min'], 'push_up' => [33, 'min']],
+        ],
+        'PENCAK SILAT' => [
+            'L' => ['sit_reach' => [25.6, 'min'], 'push_up' => [60, 'min'], 'sit_up' => [88, 'min'], 'pull_up' => [16, 'min'], 'medicine_ball' => [384, 'min'], 'illinois' => [17.5, 'max'], 'bleep_test' => [53, 'min']],
+            'P' => ['sit_reach' => [30.4, 'min'], 'push_up' => [40, 'min'], 'sit_up' => [72, 'min'], 'pull_up' => [8, 'min'], 'medicine_ball' => [310, 'min'], 'illinois' => [18.7, 'max'], 'bleep_test' => [48, 'min']],
+        ],
+        'SENAM' => [
+            'L' => ['sit_reach' => [24.49, 'min'], 'vertical_jump' => [41.7, 'min'], 'pull_up' => [24, 'min'], 'bleep_test' => [49.3, 'min']],
+            'P' => ['sit_reach' => [25.70, 'min'], 'vertical_jump' => [38.5, 'min'], 'pull_up' => [16, 'min'], 'bleep_test' => [42.5, 'min']],
+        ],
+        'TAEKWONDO' => [
+            'L' => ['sit_reach' => [25.6, 'min'], 'push_up' => [60, 'min'], 'sit_up' => [88, 'min'], 'vertical_jump' => [64, 'min'], 'bleep_test' => [52, 'min']],
+            'P' => ['sit_reach' => [30.4, 'min'], 'push_up' => [40, 'min'], 'sit_up' => [72, 'min'], 'vertical_jump' => [52, 'min'], 'bleep_test' => [44, 'min']],
+        ],
+        'RENANG' => [
+            'L' => ['sit_reach' => [24.5, 'min'], 'pull_up' => [26, 'min']],
+            'P' => ['sit_reach' => [25.7, 'min'], 'pull_up' => [17, 'min']],
+        ],
+        'WUSHU' => [
+            'L' => ['sit_reach' => [25.6, 'min'], 'bleep_test' => [52, 'min']],
+            'P' => ['sit_reach' => [30.4, 'min'], 'bleep_test' => [44, 'min']],
+        ],
+    ];
+}
+
+function normalize_standard_sport(string $sport): string
+{
+    $sport = strtoupper(trim($sport));
+    return match ($sport) {
+        'SENAM ARTISTIK', 'AEROBIK GYMNASTIC' => 'SENAM',
+        default => $sport,
+    };
+}
+
+function physical_test_indicator(string $sport, string $gender, string $testCode, mixed $value): array
+{
+    $standards = physical_test_standard_map();
+    $sportKey = normalize_standard_sport($sport);
+    $standard = $standards[$sportKey][$gender][$testCode] ?? null;
+    if (!$standard) return ['available' => false, 'label' => 'Indikator belum tersedia', 'threshold' => null, 'operator' => null, 'met' => null];
+    [$threshold, $direction] = $standard;
+    $operator = $direction === 'max' ? '≤' : '≥';
+    if ($value === null || $value === '') return ['available' => true, 'label' => 'Belum ada hasil', 'threshold' => $threshold, 'operator' => $operator, 'met' => null];
+    $numeric = (float) $value;
+    $met = $direction === 'max' ? $numeric <= $threshold : $numeric >= $threshold;
+    return ['available' => true, 'label' => $met ? 'Memenuhi indikator' : 'Belum memenuhi', 'threshold' => $threshold, 'operator' => $operator, 'met' => $met];
+}
+
+function physical_test_indicator_text(string $sport, string $gender, string $testCode, mixed $value, ?string $unit = null): string
+{
+    $indicator = physical_test_indicator($sport, $gender, $testCode, $value);
+    if (!$indicator['available']) return 'Indikator belum tersedia';
+    return $indicator['operator'] . ' ' . $indicator['threshold'] . ($unit ? ' ' . $unit : '') . ' - ' . $indicator['label'];
+}
+
 function crud_is_locked(?PDO $pdo = null): bool
 {
     try {

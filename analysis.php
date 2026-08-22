@@ -178,6 +178,8 @@ $rankingStatement = $pdo->prepare(
 );
 $rankingStatement->execute([$rankingCode]);
 $rankingRows = $rankingStatement->fetchAll();
+foreach ($rankingRows as &$rankingRow) $rankingRow['indicator'] = physical_test_indicator($rankingRow['sport'], $rankingRow['gender'], $rankingCode, $rankingRow['result_value']);
+unset($rankingRow);
 $testCount = (int) $pdo->query('SELECT COUNT(*) FROM athlete_tests')->fetchColumn();
 $testedAthletes = (int) $pdo->query('SELECT COUNT(DISTINCT master_person_id) FROM athlete_tests WHERE master_person_id IS NOT NULL')->fetchColumn();
 $retestedAthletes = (int) $pdo->query('SELECT COUNT(*) FROM (SELECT master_person_id FROM athlete_tests WHERE master_person_id IS NOT NULL GROUP BY master_person_id HAVING COUNT(*) > 1) repeated')->fetchColumn();

@@ -15,7 +15,11 @@ $resultStatement = $pdo->prepare('SELECT * FROM test_results WHERE athlete_test_
 $resultStatement->execute([$id]);
 $results = [];
 foreach ($resultStatement->fetchAll() as $item) $results[$item['test_code']] = $item;
+$indicators = [];
+foreach (physical_test_items() as $code => $definition) {
+    $indicators[$code] = physical_test_indicator($test['sport'], $test['gender'], $code, $results[$code]['result_value'] ?? null);
+}
 $photoStatement = $pdo->prepare('SELECT id, original_name, file_size FROM test_photos WHERE athlete_test_id = ? ORDER BY created_at, id');
 $photoStatement->execute([$id]);
 $photos = $photoStatement->fetchAll();
-view('test-view', compact('test', 'results', 'photos') + ['pageTitle' => 'Detail Tes']);
+view('test-view', compact('test', 'results', 'indicators', 'photos') + ['pageTitle' => 'Detail Tes']);

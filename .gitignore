@@ -4,6 +4,8 @@ php.ini
 error_log
 google-service-account*.json
 *-service-account.json
+vendor/
+permen-15-2024.pdf
 storage/logs/*.log
 storage/uploads/*
 storage/deploy-webhook.lock

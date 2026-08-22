@@ -334,6 +334,41 @@ function vo2maxCategory(vo2max, gender, age) {
     if (vo2max >= poor) return 'Poor';
     return 'Very Poor';
 }
+const bleepIndicatorStandards = {
+    ATLETIK: { L: 52, P: 44.25 },
+    BULUTANGKIS: { L: 52, P: 44 },
+    KARATE: { L: 52, P: 44 },
+    'PENCAK SILAT': { L: 53, P: 48 },
+    SENAM: { L: 49.3, P: 42.5 },
+    'SENAM ARTISTIK': { L: 49.3, P: 42.5 },
+    'AEROBIK GYMNASTIC': { L: 49.3, P: 42.5 },
+    'PANJAT TEBING': { L: 47, P: 43 },
+    TAEKWONDO: { L: 52, P: 44 },
+    WUSHU: { L: 52, P: 44 },
+};
+function updateBleepIndicator(vo2max, option, valid) {
+    const container = bleepForm?.querySelector('[data-bleep-standard]');
+    if (!container) return;
+    const thresholdNode = container.querySelector('[data-bleep-standard-threshold]');
+    const statusNode = container.querySelector('[data-bleep-standard-status]');
+    const sport = (option?.dataset.sport || '').toUpperCase();
+    const gender = option?.dataset.gender === 'P' ? 'P' : 'L';
+    const threshold = bleepIndicatorStandards[sport]?.[gender];
+    container.classList.remove('met', 'unmet');
+    if (threshold === undefined) {
+        thresholdNode.textContent = 'Belum tersedia untuk cabor ini';
+        statusNode.textContent = 'Indikator belum tersedia';
+        return;
+    }
+    thresholdNode.textContent = `≥ ${threshold} ml/kg/menit`;
+    if (!valid) {
+        statusNode.textContent = 'Belum ada hasil';
+        return;
+    }
+    const met = vo2max >= threshold;
+    container.classList.add(met ? 'met' : 'unmet');
+    statusNode.textContent = met ? 'Memenuhi indikator' : 'Belum memenuhi';
+}
 function updateBleepMetrics() {
     if (!bleepForm || !bleepLevelInput || !bleepShuttleInput) return;
     let level = Math.min(21, Math.max(1, Number(bleepLevelInput.value) || 1));
@@ -371,6 +406,7 @@ function updateBleepMetrics() {
     const gender = selectedOption?.dataset.gender || 'L';
     const categoryInput = bleepForm.querySelector('[data-bleep-category]');
     if (categoryInput) categoryInput.value = validationMessage ? '-' : vo2maxCategory(vo2max, gender, age);
+    updateBleepIndicator(vo2max, selectedOption, validationMessage === '' && Boolean(selectedAthleteValue));
     bleepForm.querySelector('[data-vo2max]').textContent = validationMessage ? '-' : vo2max.toFixed(1);
     bleepForm.querySelector('[data-bleep-speed]').textContent = speed.toFixed(2);
     bleepForm.querySelector('[data-total-shuttles]').textContent = completedShuttles;

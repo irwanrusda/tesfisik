@@ -107,7 +107,7 @@ try {
     }
 
     $results[] = run_deploy_command([$phpBinary, 'migrate.php'], $repositoryPath);
-    if ($results[1]['exit_code'] !== 0) {
+    if ($results[array_key_last($results)]['exit_code'] !== 0) {
         throw new RuntimeException('Migrasi database gagal.');
     }
 

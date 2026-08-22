@@ -102,7 +102,10 @@ if ($rows) {
     $photosByTest = [];
     foreach ($photoStatement->fetchAll() as $photo) $photosByTest[$photo['athlete_test_id']][] = $photo;
     foreach ($rows as &$row) $row['station_photos'] = $photosByTest[$row['id']] ?? [];
-    foreach ($rows as &$row) $row['input_definition'] = physical_test_input_definition($code, $row['gender'], $conditions);
+    foreach ($rows as &$row) {
+        $row['input_definition'] = physical_test_input_definition($code, $row['gender'], $conditions);
+        $row['indicator'] = physical_test_indicator($row['sport'], $row['gender'], $code, $row['result_value']);
+    }
     unset($row);
 }
 
