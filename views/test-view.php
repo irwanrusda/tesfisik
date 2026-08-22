@@ -25,7 +25,7 @@
         <div class="panel-header"><div><p class="eyebrow">KONDISI FISIK</p><h2>Hasil Pengukuran</h2></div></div>
         <div class="result-cards">
         <?php foreach (physical_test_items() as $code => $item): $result = $results[$code] ?? []; ?>
-            <div class="result-card"><div><span><?= e($item['component']) ?></span><strong><?= e($item['method']) ?></strong><small><?= e($item['detail']) ?></small></div><div class="result-score"><strong><?= e($result['result_value'] ?? '-') ?></strong><small><?= e($item['unit']) ?></small></div><div><span class="indicator-tag <?= $indicators[$code]['met'] === true ? 'met' : ($indicators[$code]['met'] === false ? 'unmet' : '') ?>"><?= $indicators[$code]['available'] ? e($indicators[$code]['operator'] . ' ' . $indicators[$code]['threshold'] . ' · ' . $indicators[$code]['label']) : 'Indikator belum tersedia' ?></span><small><?= e($result['examiner_notes'] ?? '') ?></small></div></div>
+            <div class="result-card"><div><span><?= e($item['component']) ?></span><strong><?= e($item['method']) ?></strong><small><?= e($item['detail']) ?></small></div><div class="result-score"><strong><?= e(format_number_id($result['result_value'] ?? null)) ?></strong><small><?= e($item['unit']) ?></small></div><div><span class="indicator-tag <?= $indicators[$code]['met'] === true ? 'met' : ($indicators[$code]['met'] === false ? 'unmet' : '') ?>"><?= $indicators[$code]['available'] ? e($indicators[$code]['operator'] . ' ' . format_number_id($indicators[$code]['threshold']) . ' · ' . $indicators[$code]['label']) : 'Indikator belum tersedia' ?></span><small><?= e($result['examiner_notes'] ?? '') ?></small></div></div>
         <?php endforeach; ?>
         </div>
     </article>

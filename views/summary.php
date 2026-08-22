@@ -23,8 +23,8 @@ $participation = $total > 0 ? round($tested / $total * 100, 1) : 0;
         <div><span>Total Pelaksanaan</span><strong><?= e((int) ($bleepOverview['total_tests'] ?? 0)) ?></strong><small>Seluruh tes tersimpan</small></div>
         <div><span>Atlet Sudah Tes</span><strong><?= e((int) ($bleepOverview['tested'] ?? 0)) ?></strong><small>Dari <?= e($total) ?> atlet aktif</small></div>
         <div><span>Belum Bleep Test</span><strong><?= e((int) ($bleepOverview['not_tested'] ?? 0)) ?></strong><small>Perlu dijadwalkan</small></div>
-        <div><span>Rata-Rata VO2max</span><strong><?= e($bleepOverview['average_vo2max'] ?? '-') ?></strong><small>ml/kg/menit</small></div>
-        <div><span>VO2max Tertinggi</span><strong><?= e($bleepOverview['highest_vo2max'] ?? '-') ?></strong><small>ml/kg/menit</small></div>
+        <div><span>Rata-Rata VO2max</span><strong><?= e(format_number_id($bleepOverview['average_vo2max'] ?? null)) ?></strong><small>ml/kg/menit</small></div>
+        <div><span>VO2max Tertinggi</span><strong><?= e(format_number_id($bleepOverview['highest_vo2max'] ?? null)) ?></strong><small>ml/kg/menit</small></div>
     </div>
     <div class="bleep-summary-content">
         <div class="progress-list">
@@ -36,7 +36,7 @@ $participation = $total > 0 ? round($tested / $total * 100, 1) : 0;
         <div class="bleep-sport-summary">
             <p class="summary-subtitle">CAKUPAN CABOR TERATAS</p>
             <?php foreach (array_slice($bleepSportRows, 0, 8) as $row): $rate = $row['athletes'] ? round((int) $row['tested'] / (int) $row['athletes'] * 100, 1) : 0; ?>
-                <div><span><strong><?= e($row['name']) ?></strong><small><?= e($row['tested']) ?>/<?= e($row['athletes']) ?> atlet · VO2max <?= e($row['average_vo2max'] ?? '-') ?></small></span><b><?= e($rate) ?>%</b></div>
+                <div><span><strong><?= e($row['name']) ?></strong><small><?= e($row['tested']) ?>/<?= e($row['athletes']) ?> atlet · VO2max <?= e(format_number_id($row['average_vo2max'] ?? null)) ?></small></span><b><?= e(format_number_id($rate, 1)) ?>%</b></div>
             <?php endforeach; ?>
         </div>
     </div>

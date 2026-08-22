@@ -1,6 +1,6 @@
 <div class="page-heading">
     <div><p class="eyebrow">ARSIP PENGUKURAN</p><h1>Laporan Tes Fisik</h1><p>Cari, periksa, dan cetak hasil tes atlet.</p></div>
-    <div class="button-row"><a class="btn btn-light" href="<?= e(base_url('export-results.php?' . http_build_query(['sport' => $sport, 'from' => $from, 'to' => $to]))) ?>"><i class="fa-solid fa-file-excel"></i> Export Excel</a><?php if (in_array(Auth::user()['role'] ?? '', ['superadmin', 'panitia', 'input'], true) && !crud_locked_for_current_user()): ?><a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a><?php endif; ?></div>
+    <div class="button-row"><a class="btn btn-light" href="<?= e(base_url('export-results.php?' . http_build_query(['sport' => $sport, 'from' => $from, 'to' => $to]))) ?>"><i class="fa-solid fa-file-excel"></i> Export Indikator</a><a class="btn btn-outline" href="<?= e(base_url('export-results.php?' . http_build_query(['sport' => $sport, 'from' => $from, 'to' => $to, 'raw' => 1]))) ?>"><i class="fa-solid fa-table"></i> Data Mentah</a><?php if (in_array(Auth::user()['role'] ?? '', ['superadmin', 'panitia', 'input'], true) && !crud_locked_for_current_user()): ?><a class="btn btn-primary" href="<?= e(base_url('test-create.php')) ?>">＋ Daftarkan Atlet Tes</a><?php endif; ?></div>
 </div>
 <section class="panel filter-panel">
     <form method="get" class="filter-grid">

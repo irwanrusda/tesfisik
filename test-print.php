@@ -51,8 +51,8 @@ $groups = [
         <tr class="measurement-detail-row">
             <td><?= e($definition['detail'] ?: $definition['method']) ?></td>
             <td><?= e($definition['method']) ?></td>
-            <td><span class="score-cell"><span><?= e($result['result_value'] ?? '') ?></span><small><?= e($definition['unit']) ?></small></span></td>
-            <td><?= $indicator['available'] ? e($indicator['operator'] . ' ' . $indicator['threshold'] . ' - ' . $indicator['label']) : 'Belum tersedia' ?></td>
+            <td><span class="score-cell"><span><?= e(format_number_id($result['result_value'] ?? null, 2, '')) ?></span><small><?= e($definition['unit']) ?></small></span></td>
+            <td><?= $indicator['available'] ? e($indicator['operator'] . ' ' . format_number_id($indicator['threshold']) . ' - ' . $indicator['label']) : 'Belum tersedia' ?></td>
             <td><?= e($result['examiner_notes'] ?? '') ?></td>
         </tr>
         <?php endforeach; ?>
@@ -65,9 +65,9 @@ $groups = [
         <tr class="measurement-detail-row">
             <td><?= $bleepTest ? 'Level ' . e($bleepTest['level']) . ' / Shuttle ' . e($bleepTest['shuttle']) : 'Estimasi VO2max' ?></td>
             <td>Bleep Test 20 Meter<?= $bleepTest ? '<br><small>' . e(format_date($bleepTest['test_date'])) . '</small>' : '' ?></td>
-            <td><span class="score-cell"><span><?= e($bleepTest['vo2max'] ?? '') ?></span><small>ml/kg/menit</small></span></td>
+            <td><span class="score-cell"><span><?= e(format_number_id($bleepTest['vo2max'] ?? null, 2, '')) ?></span><small>ml/kg/menit</small></span></td>
             <?php $bleepIndicator = physical_test_indicator($test['sport'], $test['gender'], 'bleep_test', $bleepTest['vo2max'] ?? null); ?>
-            <td><?= $bleepIndicator['available'] ? e($bleepIndicator['operator'] . ' ' . $bleepIndicator['threshold'] . ' - ' . $bleepIndicator['label']) : 'Belum tersedia' ?></td>
+            <td><?= $bleepIndicator['available'] ? e($bleepIndicator['operator'] . ' ' . format_number_id($bleepIndicator['threshold']) . ' - ' . $bleepIndicator['label']) : 'Belum tersedia' ?></td>
             <td><?= e($bleepTest['notes'] ?? '') ?></td>
         </tr>
     </tbody></table></section>

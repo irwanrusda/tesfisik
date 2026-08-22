@@ -133,6 +133,17 @@ function nullable_number(mixed $value): ?float
     return (float) str_replace(',', '.', (string) $value);
 }
 
+function format_number_id(mixed $value, int $maxDecimals = 2, string $fallback = '-'): string
+{
+    if ($value === null || $value === '') return $fallback;
+    if (!is_numeric($value)) return (string) $value;
+    $formatted = number_format((float) $value, $maxDecimals, ',', '.');
+    if ($maxDecimals > 0) {
+        $formatted = rtrim(rtrim($formatted, '0'), ',');
+    }
+    return $formatted;
+}
+
 function physical_test_items(): array
 {
     return [
@@ -282,7 +293,7 @@ function physical_test_indicator_text(string $sport, string $gender, string $tes
 {
     $indicator = physical_test_indicator($sport, $gender, $testCode, $value);
     if (!$indicator['available']) return 'Indikator belum tersedia';
-    return $indicator['operator'] . ' ' . $indicator['threshold'] . ($unit ? ' ' . $unit : '') . ' - ' . $indicator['label'];
+    return $indicator['operator'] . ' ' . format_number_id($indicator['threshold']) . ($unit ? ' ' . $unit : '') . ' - ' . $indicator['label'];
 }
 
 function crud_is_locked(?PDO $pdo = null): bool

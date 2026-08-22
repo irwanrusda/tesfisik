@@ -360,7 +360,7 @@ function updateBleepIndicator(vo2max, option, valid) {
         statusNode.textContent = 'Indikator belum tersedia';
         return;
     }
-    thresholdNode.textContent = `≥ ${threshold} ml/kg/menit`;
+    thresholdNode.textContent = `≥ ${String(threshold).replace('.', ',')} ml/kg/menit`;
     if (!valid) {
         statusNode.textContent = 'Belum ada hasil';
         return;
@@ -407,8 +407,8 @@ function updateBleepMetrics() {
     const categoryInput = bleepForm.querySelector('[data-bleep-category]');
     if (categoryInput) categoryInput.value = validationMessage ? '-' : vo2maxCategory(vo2max, gender, age);
     updateBleepIndicator(vo2max, selectedOption, validationMessage === '' && Boolean(selectedAthleteValue));
-    bleepForm.querySelector('[data-vo2max]').textContent = validationMessage ? '-' : vo2max.toFixed(1);
-    bleepForm.querySelector('[data-bleep-speed]').textContent = speed.toFixed(2);
+    bleepForm.querySelector('[data-vo2max]').textContent = validationMessage ? '-' : vo2max.toFixed(1).replace('.', ',');
+    bleepForm.querySelector('[data-bleep-speed]').textContent = speed.toFixed(2).replace('.', ',');
     bleepForm.querySelector('[data-total-shuttles]').textContent = completedShuttles;
     bleepForm.querySelector('[data-bleep-distance]').textContent = completedShuttles * 20;
     bleepForm.querySelector('[data-shuttle-limit]').textContent = `Maksimal ${maxShuttles} shuttle pada level ini`;

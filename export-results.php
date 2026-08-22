@@ -9,6 +9,7 @@ $pdo = Database::connection();
 $sport = trim((string) ($_GET['sport'] ?? ''));
 $from = (string) ($_GET['from'] ?? '');
 $to = (string) ($_GET['to'] ?? '');
+$raw = (string) ($_GET['raw'] ?? '') === '1';
 $where = [];
 $params = [];
 if ($sport !== '') { $where[] = 'at.sport = ?'; $params[] = $sport; }
@@ -37,8 +38,10 @@ $headers = ['No', 'Nama', 'Jenis Kelamin', 'Tempat/Tanggal Lahir', 'Cabang Olahr
 foreach ($items as $code => $definition) {
     $headerUnit = $code === 'pull_up' ? 'kali/detik' : $definition['unit'];
     $headers[] = $definition['method'] . ' - Hasil (' . $headerUnit . ')';
-    $headers[] = $definition['method'] . ' - Indikator 80% (' . $headerUnit . ')';
-    $headers[] = $definition['method'] . ' - Status';
+    if (!$raw) {
+        $headers[] = $definition['method'] . ' - Indikator 80% (' . $headerUnit . ')';
+        $headers[] = $definition['method'] . ' - Status';
+    }
 }
 $physicalRows = [$headers];
 foreach ($tests as $index => $test) {
@@ -48,17 +51,23 @@ foreach ($tests as $index => $test) {
         $result = $resultsByTest[$test['id']][$code] ?? null;
         $indicator = physical_test_indicator($test['sport'], $test['gender'], $code, $result['result_value'] ?? null);
         $row[] = $result && $result['result_value'] !== null ? (float) $result['result_value'] : '';
-        $row[] = $indicator['available'] ? $indicator['operator'] . ' ' . $indicator['threshold'] : '-';
-        $row[] = $indicator['available'] ? $indicator['label'] : '-';
+        if (!$raw) {
+            $row[] = $indicator['available'] ? $indicator['operator'] . ' ' . format_number_id($indicator['threshold']) : '-';
+            $row[] = $indicator['available'] ? $indicator['label'] : '-';
+        }
     }
     $physicalRows[] = $row;
 }
 
-$bleepHeaders = ['No', 'Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'Cabang Olahraga', 'Tanggal Tes', 'Level', 'Shuttle', 'Total Shuttle (balikan)', 'Jarak (m)', 'Kecepatan (km/jam)', 'VO2max (ml/kg/menit)', 'Indikator 80% (ml/kg/menit)', 'Status'];
+$bleepHeaders = ['No', 'Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'Cabang Olahraga', 'Tanggal Tes', 'Level', 'Shuttle', 'Total Shuttle (balikan)', 'Jarak (m)', 'Kecepatan (km/jam)', 'VO2max (ml/kg/menit)'];
+if (!$raw) {
+    $bleepHeaders[] = 'Indikator 80% (ml/kg/menit)';
+    $bleepHeaders[] = 'Status';
+}
 $bleepRows = [$bleepHeaders];
 foreach ($bleepTests as $index => $test) {
     $indicator = physical_test_indicator($test['sport'], $test['gender'], 'bleep_test', $test['vo2max']);
-    $bleepRows[] = [
+    $bleepRow = [
         $index + 1,
         $test['athlete_name'],
         $test['gender'] === 'L' ? 'Laki-Laki' : 'Perempuan',
@@ -71,9 +80,12 @@ foreach ($bleepTests as $index => $test) {
         $test['distance_m'],
         $test['speed_kmh'],
         $test['vo2max'],
-        $indicator['available'] ? $indicator['operator'] . ' ' . $indicator['threshold'] : '-',
-        $indicator['available'] ? $indicator['label'] : '-',
     ];
+    if (!$raw) {
+        $bleepRow[] = $indicator['available'] ? $indicator['operator'] . ' ' . format_number_id($indicator['threshold']) : '-';
+        $bleepRow[] = $indicator['available'] ? $indicator['label'] : '-';
+    }
+    $bleepRows[] = $bleepRow;
 }
 
 function excel_xml(mixed $value): string
@@ -110,7 +122,7 @@ $workbook .= excel_worksheet('Hasil Tes Fisik', $physicalRows);
 $workbook .= excel_worksheet('Hasil VO2max', $bleepRows);
 $workbook .= '</Workbook>';
 
-$filename = 'hasil-tes-fisik-koni-sumbar-' . date('Ymd-His') . '.xls';
+$filename = ($raw ? 'data-mentah-tes-fisik-koni-sumbar-' : 'hasil-tes-fisik-koni-sumbar-') . date('Ymd-His') . '.xls';
 header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 header('Cache-Control: max-age=0, no-store');
